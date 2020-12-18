@@ -1,4 +1,4 @@
-import { ApolloServer ,Conte} from "apollo-server";
+import { ApolloServer } from "apollo-server";
 import { GraphQLFileLoader, loadSchema } from "graphql-tools";
 
 (async () => {
