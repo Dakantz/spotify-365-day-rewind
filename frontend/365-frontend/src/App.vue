@@ -1,33 +1,48 @@
 <template>
   <v-app>
     <v-app-bar app>
-      <v-toolbar-title>365 days of rewind</v-toolbar-title>
+      <v-toolbar-title class="headline text-uppercase">365 days of rewind</v-toolbar-title>
+
+       <v-btn text to="/">
+        <span class="mr-2">Info</span>
+      </v-btn>
+      <v-btn v-if="loggedIn" text to="/stats">
+        <span class="mr-2">Stats</span>
+      </v-btn>
 
       <v-spacer></v-spacer>
-
+      <div v-if="loggedIn">Logged in as {{ userInfo.name }}</div>
       <v-btn
+        v-else
         :href="client_url"
         target="_blank"
         :loading="$apollo.queries.client_url.loading"
         >Login (via Spotify)
       </v-btn>
     </v-app-bar>
-
-    <v-main>
+    <v-navigation-drawer v-model="drawer" app fixed>
+      <!--  -->
+    </v-navigation-drawer>
+    <v-main app>
       <router-view />
     </v-main>
   </v-app>
 </template>
 
 <script>
+import { mapState } from "vuex";
 import gql from "graphql-tag";
 import * as querystring from "querystring";
 export default {
   name: "App",
 
   components: {},
-
-  data: () => ({}),
+  computed: mapState([
+    // map this.count to store.state.count
+    "loggedIn",
+    "userInfo",
+  ]),
+  data: () => ({ drawer: false }),
   apollo: {
     client_url: {
       query: gql`
@@ -64,6 +79,11 @@ export default {
       },
     },
   },
-  created: function() {},
+  created: async function() {
+    let token = localStorage.getItem("backend-token");
+    if (token) {
+      await this.$store.dispatch("logIn", token);
+    }
+  },
 };
 </script>

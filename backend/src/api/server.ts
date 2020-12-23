@@ -4,7 +4,7 @@ import { contextFunc, createUser, SContext } from "./auth";
 import { resolvers } from "./resolver";
 import { join } from "path";
 (async () => {
-  let schema = await loadSchema(join(__dirname, "../schema.graphql"), {
+  let schema = await loadSchema(join(__dirname, "../../schema.graphql"), {
     loaders: [new GraphQLFileLoader()],
     resolvers
   });

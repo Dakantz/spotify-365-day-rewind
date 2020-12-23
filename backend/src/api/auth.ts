@@ -2,11 +2,12 @@ import { PrismaClient } from "@prisma/client";
 import { ExpressContext } from "apollo-server-express/src/ApolloServer";
 import Bull, { Queue } from "bull";
 import { verify, sign } from "jsonwebtoken";
-import {  SpotifyClient, SpotifyTokenClient } from "../shared";
+import { SpotifyClient, SpotifyTokenClient } from "../shared";
+import { GQLAuthentificationResponse, GQLUser } from "./returnTypes";
 const db = new PrismaClient();
 const queue = new Bull("worker");
 export class UserTokenData {
-  constructor(public uid: string, public email: string, public name: string) {}
+  constructor(public uid: number, public email: string, public name: string) {}
 }
 export class SContext {
   constructor(
@@ -28,7 +29,7 @@ export async function contextFunc(context: ExpressContext): Promise<SContext> {
       let decoded = verify(token, process.env.JWT_SECRET as string, {
         complete: true,
       }) as { [key: string]: { [key2: string]: string } };
-      user = (decoded.body as unknown) as UserTokenData;
+      user = (decoded.payload as unknown) as UserTokenData;
     }
   }
 
@@ -98,7 +99,7 @@ export async function createUser(
     {
       jobId: `token:${id}`,
       repeat: {
-        every: 10 * 60 * 1000,//10 min
+        every: 10 * 60 * 1000, //10 min
       },
     }
   );
@@ -110,8 +111,13 @@ export async function createUser(
     {
       jobId: `play:${id}`,
       repeat: {
-        every: 10 * 60 * 1000,//10 min
+        every: 10 * 60 * 1000, //10 min
       },
     }
+  );
+  let jwt_data = new UserTokenData(id, me.email, me.display_name);
+  return new GQLAuthentificationResponse(
+    sign(JSON.stringify(jwt_data), process.env.JWT_SECRET as string),
+    new GQLUser(data.name, data.email, respone.access_token)
   );
 }

@@ -7,13 +7,13 @@ export default new Vuex.Store({
   state: {
     loggedIn: false,
     token: "",
-    userInfo: "",
+    userInfo: {},
   },
   mutations: {
     logOut(state) {
       state.loggedIn = false;
       store.token = "";
-      store.userInfo = "";
+      store.userInfo = {};
     },
     logIn(state, token) {
       state.token = token;
@@ -22,7 +22,7 @@ export default new Vuex.Store({
         json: true,
       });
       state.loggedIn = true;
-      state.userInfo = decoded;
+      state.userInfo = decoded.payload;
     },
   },
   actions: {
@@ -31,7 +31,7 @@ export default new Vuex.Store({
       
     },
     async logIn({ commit }, token) {
-      commit("login", token);
+      commit("logIn", token);
     },
   },
   modules: {},

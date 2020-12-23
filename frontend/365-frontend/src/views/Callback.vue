@@ -2,7 +2,10 @@
   <div class="callback">
     <h1>Welcome back!</h1>
     <h2>We are getting everything ready, hold tight!</h2>
-    <v-progress-circular indeterminate />
+    <div v-if="error">
+      Failed to sign you up, please try again!, reason: {{ error }}
+    </div>
+    <v-progress-circular v-else indeterminate />
   </div>
 </template>
 
@@ -50,12 +53,19 @@ export default {
               window.location.host +
               "/callback",
           },
+          fetchPolicy: "no-cache",
         });
-        if (userData.registerOrLogin.__typename == "AuthentificationResponse") {
-          await this.onLogin(userData.token);
-          onLogin(this.$apollo.defaultClient, userData.registerOrLogin.token);
+        if (
+          userData.data.registerOrLogin.__typename == "AuthentificationResponse"
+        ) {
+          await this.$store.dispatch("logIn", userData.token);
+          onLogin(
+            this.$apollo.provider.defaultClient,
+            userData.data.registerOrLogin.token
+          );
+          this.$router.push("stats");
         } else {
-          this.error = userData.registerOrLogin.error;
+          this.error = userData.data.registerOrLogin.message;
         }
       }
     } catch (e) {
@@ -66,7 +76,7 @@ export default {
 </script>
 
 <style>
-.callback{
+.callback {
   align-items: center;
   justify-content: center;
   flex-direction: column;

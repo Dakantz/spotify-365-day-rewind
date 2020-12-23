@@ -2,6 +2,7 @@ import Vue from 'vue'
 import VueRouter from 'vue-router'
 import Home from '../views/Home.vue'
 import Callback from '../views/Callback.vue'
+import Stats from '../views/Stats.vue'
 
 Vue.use(VueRouter)
 
@@ -15,6 +16,11 @@ const routes = [
     path: '/callback',
     name: 'Callback',
     component: Callback
+  },
+  {
+    path: '/stats',
+    name: 'Stats',
+    component: Stats
   },
   {
     path: '/about',

@@ -43,6 +43,7 @@ const defaultOptions = {
 
   // Client local data (see apollo-link-state)
   // clientState: { resolvers: { ... }, defaults: { ... } }
+  fetchPolicy: "no-cache"
 }
 
 // Call this in the Vue app file

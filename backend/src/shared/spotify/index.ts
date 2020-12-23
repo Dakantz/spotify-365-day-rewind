@@ -63,7 +63,7 @@ export class SpotifyTokenClient {
   private buildHeaders() {
     return {
       Authorization:
-        "Basic" +
+        "Basic " +
         Buffer.from(`${this.clientId}:${this.clientSecret}`).toString("base64"),
     };
   }

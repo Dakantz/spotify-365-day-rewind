@@ -45,10 +45,10 @@ type User {
   name: String!
   email: String!
   mostPlayedSongs(take: Int, skip: Int): [Song]!
-  mostPlayedArtists(take: Int, skip: Int): [Song]!
+  mostPlayedArtists(take: Int, skip: Int): [Artist]!
   status: Status!
   stats: Stats!
-  spotifyToken: String!
+  token: String!
 }
 union UserAndError = User | Error
 
