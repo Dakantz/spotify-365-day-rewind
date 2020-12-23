@@ -2,16 +2,17 @@
   <div class="callback">
     <h1>Welcome back!</h1>
     <h2>We are getting everything ready, hold tight!</h2>
+    <v-progress-circular indeterminate />
   </div>
 </template>
 
 <script>
 import { mapActions } from "vuex";
 import { onLogin } from "../plugins/vue-apollo";
+import gql from "graphql-tag";
 export default {
   name: "Callback",
-  components: {
-  },
+  components: {},
   ...mapActions(["logIn"]),
   data: () => ({
     error: null,
@@ -64,4 +65,11 @@ export default {
 };
 </script>
 
-<style></style>
+<style>
+.callback{
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  display: flex;
+}
+</style>

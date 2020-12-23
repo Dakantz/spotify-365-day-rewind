@@ -1,0 +1,74 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model albums {
+  albumid  Int      @id @default(autoincrement())
+  artistid Int?
+  name     String
+  uri      String
+  artists  artists? @relation(fields: [artistid], references: [artistid])
+  songs    songs[]
+}
+
+model artistgenres {
+  id       Int      @id @default(autoincrement())
+  artistid Int?
+  gid      Int?
+  artists  artists? @relation(fields: [artistid], references: [artistid])
+  genres   genres?  @relation(fields: [gid], references: [gid])
+}
+
+model artists {
+  artistid     Int            @id @default(autoincrement())
+  name         String
+  uri          String
+  albums       albums[]
+  artistgenres artistgenres[]
+  songs        songs[]
+}
+
+model genres {
+  gid          Int            @id @default(autoincrement())
+  name         String         @unique
+  artistgenres artistgenres[]
+}
+
+model plays {
+  playid Int      @id @default(autoincrement())
+  time   DateTime
+  songid Int?
+  userid Int?
+  songs  songs?   @relation(fields: [songid], references: [songid])
+  users  users?   @relation(fields: [userid], references: [userid])
+
+  @@unique([time, songid, userid], name: "u_constraint")
+}
+
+model songs {
+  songid   Int      @id @default(autoincrement())
+  explicit Boolean
+  albumid  Int?
+  artistid Int?
+  name     String
+  uri      String
+  albums   albums?  @relation(fields: [albumid], references: [albumid])
+  artists  artists? @relation(fields: [artistid], references: [artistid])
+  plays    plays[]
+}
+
+model users {
+  userid       Int     @id @default(autoincrement())
+  name         String
+  email        String
+  token        String
+  refreshtoken String
+  redirecturl  String
+  uri          String
+  plays        plays[]
+}

@@ -63,7 +63,7 @@ type Mutation {
   registerOrLogin(
     code: String!
     redirectUrl: String!
-  ): AuthentificationResponseAndError
+  ): AuthentificationResponseAndError!
 }
 
 type Query {

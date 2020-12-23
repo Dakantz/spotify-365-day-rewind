@@ -1,6 +1,6 @@
 <template>
   <v-app>
-    <v-app-bar app dark>
+    <v-app-bar app>
       <v-toolbar-title>365 days of rewind</v-toolbar-title>
 
       <v-spacer></v-spacer>
@@ -9,8 +9,7 @@
         :href="client_url"
         target="_blank"
         :loading="$apollo.queries.client_url.loading"
-      >Login (via Spotify)™
-
+        >Login (via Spotify)
       </v-btn>
     </v-app-bar>
 
