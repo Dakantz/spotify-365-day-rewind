@@ -3,6 +3,7 @@ import { ExpressContext } from "apollo-server-express/src/ApolloServer";
 import Bull, { Queue } from "bull";
 import { verify, sign } from "jsonwebtoken";
 import { SpotifyClient, SpotifyTokenClient } from "../shared";
+import { InitJob, RefreshTokenJob, SyncPlaysJob } from "../shared/types";
 import { GQLAuthentificationResponse, GQLUser } from "./returnTypes";
 const db = new PrismaClient();
 const queue = new Bull("worker");
@@ -90,12 +91,8 @@ export async function createUser(
   await queue.removeJobs(`token:${id}`);
   await queue.removeJobs(`plays:${id}`);
   await queue.add(
-    {
-      user_id: id,
-      refresh_token: respone.refresh_token,
-      client_id,
-      client_secret,
-    },
+    RefreshTokenJob.jobName,
+    new RefreshTokenJob(id, respone.refresh_token, client_id, client_secret),
     {
       jobId: `token:${id}`,
       repeat: {
@@ -103,18 +100,13 @@ export async function createUser(
       },
     }
   );
-  await queue.add(
-    {
-      user_id: id,
-      token: respone.access_token,
+  await queue.add(SyncPlaysJob.jobName, new SyncPlaysJob(id), {
+    jobId: `play:${id}`,
+    repeat: {
+      every: 10 * 60 * 1000, //10 min
     },
-    {
-      jobId: `play:${id}`,
-      repeat: {
-        every: 10 * 60 * 1000, //10 min
-      },
-    }
-  );
+  });
+  await queue.add(InitJob.jobName, new InitJob(id, respone.access_token));
   let jwt_data = new UserTokenData(id, me.email, me.display_name);
   return new GQLAuthentificationResponse(
     sign(JSON.stringify(jwt_data), process.env.JWT_SECRET as string),

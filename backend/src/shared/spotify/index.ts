@@ -28,9 +28,22 @@ export class SpotifyClient {
     return (await this.requestData("/me")).data;
   }
 
-  public async recentListened() {
-    return (await this.requestData("/me/player/recently-played", { limit: 50 }))
-      .data;
+  public async track(id: string) {
+    return (await this.requestData("/tracks/" + id)).data;
+  }
+  public async artist(id: string) {
+    return (await this.requestData("/artists/" + id)).data;
+  }
+  public async album(id: string) {
+    return (await this.requestData("/albums/" + id)).data;
+  }
+  public async recentListened(query?: any) {
+    return (
+      await this.requestData("/me/player/recently-played", {
+        limit: 50,
+        ...query,
+      })
+    ).data;
   }
 }
 export class SpotifyTokenClient {

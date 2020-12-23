@@ -1,4 +1,4 @@
-DROP TABLE  IF EXISTS Users,
+DROP TABLE IF EXISTS Users,
 Genres,
 Artists,
 ArtistGenres,
@@ -25,27 +25,27 @@ CREATE TABLE Artists(
 );
 CREATE TABLE ArtistGenres(
     id SERIAL PRIMARY KEY,
-    artistId INT REFERENCES Artists,
-    gId INT REFERENCES Genres
+    artistId INT NOT NULL REFERENCES Artists,
+    gId INT NOT NULL REFERENCES Genres
 );
 CREATE TABLE Albums(
     albumId SERIAL PRIMARY KEY,
-    artistId INT REFERENCES Artists,
+    artistId INT NOT NULL REFERENCES Artists,
     name VARCHAR(256) NOT NULL,
     uri VARCHAR(256) NOT NULL
 );
 CREATE TABLE Songs(
     songId SERIAL PRIMARY KEY,
     explicit BOOLEAN NOT NULL,
-    albumId INT REFERENCES Albums,
-    artistId INT REFERENCES Artists,
+    albumId INT NOT NULL REFERENCES Albums,
+    artistId INT NOT NULL REFERENCES Artists,
     name VARCHAR(256) NOT NULL,
     uri VARCHAR(256) NOT NULL
 );
 CREATE TABLE Plays(
     playId SERIAL PRIMARY KEY,
     time TIMESTAMP NOT NULL,
-    songId INT REFERENCES Songs,
-    userId INT REFERENCES Users,
+    songId INT NOT NULL REFERENCES Songs,
+    userId INT NOT NULL REFERENCES Users,
     CONSTRAINT u_constraint UNIQUE(time, songId, userId)
 );

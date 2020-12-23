@@ -55,10 +55,11 @@ export default {
           },
           fetchPolicy: "no-cache",
         });
+        console.log(userData.data);
         if (
           userData.data.registerOrLogin.__typename == "AuthentificationResponse"
         ) {
-          await this.$store.dispatch("logIn", userData.token);
+          await this.$store.dispatch("logIn", userData.data.registerOrLogin.token);
           onLogin(
             this.$apollo.provider.defaultClient,
             userData.data.registerOrLogin.token

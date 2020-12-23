@@ -10,12 +10,6 @@ export class GQLUser {
   get __typename() {
     return "User";
   }
-  public mostPlayedSongs: songs[] = [];
-  public mostPlayedArtists: artists[] = [];
-  public status = {};
-  public stats = {
-    from: "",
-  };
   constructor(
     public name: string,
     public email: string,
