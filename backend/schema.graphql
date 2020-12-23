@@ -1,76 +1,72 @@
-
-type Error{
-    message:String
+type Error {
+  message: String
 }
 
 type Artist {
-    name:String!
-    cover:String!
-    songs:[Song]!
+  name: String!
+  cover: String!
+  songs: [Song]!
 }
 
-type Song{
-    name:String!
-    cover:String!
-    artist:[Artist]!
+type Song {
+  name: String!
+  cover: String!
+  artist: [Artist]!
 }
 
 type SongInfo {
-    playCount:Int!
-    playMinutes:Float!
-    song:Song!
+  playCount: Int!
+  playMinutes: Float!
+  song: Song!
 }
 
 type ArtistInfo {
-    playCount:Int!
-    playMinutes:Float!
-    artist:Artist!
+  playCount: Int!
+  playMinutes: Float!
+  artist: Artist!
 }
 
-enum PlayState{
-    PLAYING
-    PAUSED
-    NONE
+enum PlayState {
+  PLAYING
+  PAUSED
+  NONE
 }
 
-type Status{
-    playing:Song
-    playState:PlayState
+type Status {
+  playing: Song
+  playState: PlayState
 }
-
 
 type Stats {
-
-
-
+  from: String!
 }
 
-type User{
-    name:String!
-    email:String!
-    mostPlayedSongs(take:Int, skip:Int):[Song]!
-    mostPlayedArtists(take:Int, skip:Int):[Song]!
-    status:Status!
-    stats:Stats!
-    spotifyToken: String!
-    
+type User {
+  name: String!
+  email: String!
+  mostPlayedSongs(take: Int, skip: Int): [Song]!
+  mostPlayedArtists(take: Int, skip: Int): [Song]!
+  status: Status!
+  stats: Stats!
+  spotifyToken: String!
 }
 union UserAndError = User | Error
 
-type AuthentificationResponse{
-    token: String!
-    user:User!
+type AuthentificationResponse {
+  token: String!
+  user: User!
 }
 
 union AuthentificationResponseAndError = AuthentificationResponse | Error
 
-type Mutation{
-    registerOrLogin(code:String!, redirectUrl:String!, email:String): AuthentificationResponseAndError
+type Mutation {
+  registerOrLogin(
+    code: String!
+    redirectUrl: String!
+  ): AuthentificationResponseAndError
 }
 
-
-
-type Query{
-    clientToken:String
-    me:UserAndError!
+type Query {
+  clientToken: String!
+  me: UserAndError!
 }

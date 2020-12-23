@@ -1,60 +1,70 @@
 <template>
   <v-app>
-    <v-app-bar
-      app
-      color="primary"
-      dark
-    >
-      <div class="d-flex align-center">
-        <v-img
-          alt="Vuetify Logo"
-          class="shrink mr-2"
-          contain
-          src="https://cdn.vuetifyjs.com/images/logos/vuetify-logo-dark.png"
-          transition="scale-transition"
-          width="40"
-        />
-
-        <v-img
-          alt="Vuetify Name"
-          class="shrink mt-1 hidden-sm-and-down"
-          contain
-          min-width="100"
-          src="https://cdn.vuetifyjs.com/images/logos/vuetify-name-dark.png"
-          width="100"
-        />
-      </div>
+    <v-app-bar app dark>
+      <v-toolbar-title>365 days of rewind</v-toolbar-title>
 
       <v-spacer></v-spacer>
 
       <v-btn
-        href="https://github.com/vuetifyjs/vuetify/releases/latest"
+        :href="client_url"
         target="_blank"
-        text
-      >
-        <span class="mr-2">Latest Release</span>
-        <v-icon>mdi-open-in-new</v-icon>
+        :loading="$apollo.queries.client_url.loading"
+      >Login (via Spotify)™
+
       </v-btn>
     </v-app-bar>
 
     <v-main>
-      <HelloWorld/>
+      <router-view />
     </v-main>
   </v-app>
 </template>
 
 <script>
-import HelloWorld from './components/HelloWorld';
-
+import gql from "graphql-tag";
+import * as querystring from "querystring";
 export default {
-  name: 'App',
+  name: "App",
 
-  components: {
-    HelloWorld,
+  components: {},
+
+  data: () => ({}),
+  apollo: {
+    client_url: {
+      query: gql`
+        query {
+          clientToken
+        }
+      `,
+      update: (data) => {
+        console.log(data);
+        let query = {
+          client_id: data.clientToken,
+          response_type: "code",
+          redirect_uri:
+            window.location.protocol +
+            "//" +
+            window.location.host +
+            "/callback",
+          scope: [
+            "user-read-playback-state",
+            "user-read-currently-playing",
+            "playlist-modify-public",
+            "user-read-email",
+            "user-library-read",
+            "user-read-recently-played",
+            "user-top-read",
+            "user-read-playback-position",
+          ].join(" "),
+          show_dialog: false,
+        };
+        return (
+          "https://accounts.spotify.com/authorize?" +
+          querystring.stringify(query)
+        );
+      },
+    },
   },
-
-  data: () => ({
-    //
-  }),
+  created: function() {},
 };
 </script>

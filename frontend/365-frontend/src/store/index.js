@@ -1,15 +1,38 @@
-import Vue from 'vue'
-import Vuex from 'vuex'
-
-Vue.use(Vuex)
+import Vue from "vue";
+import Vuex, { Store } from "vuex";
+import { decode } from "jsonwebtoken";
+Vue.use(Vuex);
 
 export default new Vuex.Store({
   state: {
+    loggedIn: false,
+    token: "",
+    userInfo: "",
   },
   mutations: {
+    logOut(state) {
+      state.loggedIn = false;
+      store.token = "";
+      store.userInfo = "";
+    },
+    logIn(state, token) {
+      state.token = token;
+      let decoded = decode(token, {
+        complete: true,
+        json: true,
+      });
+      state.loggedIn = true;
+      state.userInfo = decoded;
+    },
   },
   actions: {
+    async logOut({ commit, state }) {
+      commit("logOut");
+      
+    },
+    async logIn({ commit }, token) {
+      commit("login", token);
+    },
   },
-  modules: {
-  }
-})
+  modules: {},
+});
