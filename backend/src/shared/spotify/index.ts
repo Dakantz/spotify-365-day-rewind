@@ -7,10 +7,10 @@ export class SpotifyClient {
     this.headers["Authorization"] = "Bearer " + token;
   }
   private async requestData(url: string, query: any = {}) {
-    let fullUrl = url + querystring.stringify(query);
     while (true) {
       try {
-        return await axios.get(this.baseUrl + fullUrl, {
+        return await axios.get(this.baseUrl + url, {
+          params: query,
           headers: this.headers,
         });
       } catch (error) {

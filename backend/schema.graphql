@@ -36,18 +36,36 @@ type Status {
   playing: Song
   playState: PlayState
 }
-
-type Stats {
-  from: String!
+type StatPoint {
+  minutes: Float
+  plays: Int
+  artists: [Artist]!
+  songs: [Song]!
+  time: Int!
 }
 
+enum Scale {
+  DOW
+  HOUR
+  DAY
+  WEEK
+  MONTH
+}
+type Stats {
+  from: String!
+  to: String!
+  scale: Scale!
+  wantedSteps: Int!
+  steps: [StatPoint]!
+  total: StatPoint!
+}
 type User {
   name: String!
   email: String!
   mostPlayedSongs(take: Int, skip: Int): [Song]!
   mostPlayedArtists(take: Int, skip: Int): [Artist]!
   status: Status!
-  stats: Stats!
+  stats(from: String, to: String, steps: Int!, scale: Scale!): Stats!
   token: String!
 }
 union UserAndError = User | Error

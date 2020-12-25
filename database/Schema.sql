@@ -40,7 +40,8 @@ CREATE TABLE Songs(
     albumId INT NOT NULL REFERENCES Albums,
     artistId INT NOT NULL REFERENCES Artists,
     name VARCHAR(256) NOT NULL,
-    uri VARCHAR(256) NOT NULL
+    uri VARCHAR(256) NOT NULL,
+    duration_ms INT NOT NULL
 );
 CREATE TABLE Plays(
     playId SERIAL PRIMARY KEY,

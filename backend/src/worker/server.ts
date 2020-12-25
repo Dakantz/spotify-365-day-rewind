@@ -8,9 +8,16 @@ import { UserWorker } from "./workers";
   const db = new PrismaClient();
   const queue = new Bull("worker");
   const worker = new UserWorker(db);
-  await queue.process(InitJob.jobName, worker.processInit);
-  await queue.process(RefreshTokenJob.jobName, worker.processSync);
-  await queue.process(SyncPlaysJob.jobName, worker.processRefresh);
+  queue.on("error", (err) => {
+    console.error("error during processing:", err);
+  });
+
+  queue.on("removed", (err) => {
+    console.error("removed:", err);
+  });
+  queue.process(InitJob.jobName, worker.processInit.bind(worker));
+  queue.process(SyncPlaysJob.jobName, worker.processSync.bind(worker));
+  queue.process(RefreshTokenJob.jobName, worker.processRefresh.bind(worker));
   console.log("Ready to accept jobs");
 })()
   .then(() => {
