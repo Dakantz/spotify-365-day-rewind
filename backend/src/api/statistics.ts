@@ -53,16 +53,16 @@ export class Stats {
     );
   }
   public async steps(parent: GQLStats) {
-    let query=`
+    let query = `
     SELECT count(*) as plays, sum(s.duration_ms) / (1000 * 60) as playtime, extract(${
-          parent.scale
-        } FROM plays.time) as timemeaser
+      parent.scale
+    } FROM plays.time) as timemeaser
     FROM plays
              LEFT JOIN songs s on s.songid = plays.songid
     WHERE ${parent.userId ? "userid = " + parent.userId + " AND" : ""}
      plays.time BETWEEN '${parent.from}' AND '${parent.to}'
     GROUP BY timemeaser 
-        `
+        `;
     let data = await this.db.$queryRaw(query);
 
     let steps: GQLStatPoint[] = [];
@@ -93,9 +93,9 @@ WHERE ${parent.userId ? "userid = " + parent.userId + " AND" : ""}
     if (data.length > 0) {
       let point = data[0];
       return new GQLStatPoint(
-        point.playtime,
+        point.playtime ? point.playtime : 0,
         point.plays,
-        point.time,
+        point.time ? point.time : 0,
         undefined,
         undefined,
         parent.userId
