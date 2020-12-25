@@ -20,9 +20,6 @@
         >Login (via Spotify)
       </v-btn>
     </v-app-bar>
-    <v-navigation-drawer v-model="drawer" app fixed>
-      <!--  -->
-    </v-navigation-drawer>
     <v-main app>
       <router-view />
     </v-main>

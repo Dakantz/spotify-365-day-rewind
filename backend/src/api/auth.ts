@@ -104,14 +104,14 @@ export async function createUser(
     {
       jobId: `token:${id}`,
       repeat: {
-        every: 1000 * 60 * 5, //10 min
+        every: 1000, //10 min
       },
     }
   );
   await queue.add(SyncPlaysJob.jobName, new SyncPlaysJob(id), {
     jobId: `play:${id}`,
     repeat: {
-      every: 1000 * 60 * 5, //10 min
+      every: 1000, //10 min
     },
   });
   await queue.add(InitJob.jobName, new InitJob(id, respone.access_token), {

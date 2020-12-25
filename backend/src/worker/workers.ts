@@ -58,7 +58,12 @@ export class UserWorker {
     }
   }
   async processSync(job: Job<SyncPlaysJob>) {
-    console.log("Starting sync of", job.data.userId);
+    console.log(
+      "Starting sync of",
+      job.data.userId,
+      "on",
+      new Date().toISOString
+    );
     let lastPlay = await this.db.$queryRaw(
       `SELECT max(time) FROM plays as p WHERE p.userId=${job.data.userId}`
     );
@@ -86,7 +91,12 @@ export class UserWorker {
     }
   }
   async processRefresh(job: Job<RefreshTokenJob>) {
-    console.log("Starting refresh of", job.data.userId);
+    console.log(
+      "Starting refresh of",
+      job.data.userId,
+      "on",
+      new Date().toISOString
+    );
     let user = await this.db.users.findFirst({
       where: {
         userid: job.data.userId,
