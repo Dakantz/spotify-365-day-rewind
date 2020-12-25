@@ -11,6 +11,7 @@ import { join } from "path";
   let server = new ApolloServer({
     schema,
     context: contextFunc,
+    tracing:true
   });
   await server.listen({
     url: "/graphql",

@@ -51,3 +51,48 @@ export class GQLStats {
     public userId?: number
   ) {}
 }
+export class GQLImage {
+  get __typename() {
+    return "Image";
+  }
+  constructor(
+    public url: string,
+    public height: number,
+    public width: number
+  ) {}
+}
+export class GQLArtist {
+  get __typename() {
+    return "Artist";
+  }
+  constructor(public name: string, public cover: GQLImage[]) {}
+}
+
+export class GQLArtistStats {
+  get __typename() {
+    return "ArtistStats";
+  }
+  constructor(
+    public artist: GQLArtist,
+    public minutes: number,
+    public plays: number
+  ) {}
+}
+
+export class GQLSSong {
+  get __typename() {
+    return "Song";
+  }
+  constructor(public name: string, public cover: GQLImage[]) {}
+}
+
+export class GQLSongStats {
+  get __typename() {
+    return "SongStats";
+  }
+  constructor(
+    public song: GQLSSong,
+    public minutes: number,
+    public plays: number
+  ) {}
+}

@@ -1,6 +1,12 @@
 import { PrismaClient } from "@prisma/client";
 import { SpotifyClient } from "../shared";
-import { GQLStatPoint, GQLStats, ScaleSteps } from "./returnTypes";
+import {
+  GQLArtist,
+  GQLArtistStats,
+  GQLStatPoint,
+  GQLStats,
+  ScaleSteps,
+} from "./returnTypes";
 
 export class Stats {
   constructor(private db: PrismaClient) {}
@@ -103,5 +109,74 @@ WHERE ${parent.userId ? "userid = " + parent.userId + " AND" : ""}
     } else {
       return new GQLStatPoint(0, 0, -1, undefined, undefined, parent.userId);
     }
+  }
+  public async mostPlayedArtists(
+    spotify: SpotifyClient,
+    to: Date = new Date(),
+    take: number = 20,
+    skip: number = 0,
+    from?: Date,
+    userId?: number
+  ) {
+    if (take > 50) {
+      take = 50;
+    }
+    let data = await this.db.$queryRaw(`
+    SELECT count(*) as plays, sum(s.duration_ms)/(1000*60) as playtime, a.name, a.uri FROM plays LEFT JOIN songs s on s.songid = plays.songid
+LEFT JOIN artists a on a.artistid = s.artistid
+WHERE ${userId ? "userid = " + userId + " AND" : ""}
+${
+  from
+    ? `plays.time BETWEEN '${from.toISOString()}' AND '${to.toISOString()}'`
+    : `plays.time <'${to.toISOString()}'`
+}
+GROUP BY a.artistid
+ORDER BY plays DESC
+LIMIT ${take}
+OFFSET ${skip}`);
+    let artists = await spotify.artists(
+      data.map((p: any) => p.uri.split(":")[2])
+    );
+    return artists.map((artist: any, index: number) => {
+      return new GQLArtistStats(
+        new GQLArtist(artist.name, artist.images),
+        data[index].playtime,
+        data[index].plays
+      );
+    });
+  }
+
+  public async mostPlayedSongs(
+    spotify: SpotifyClient,
+    to: Date = new Date(),
+    take: number = 20,
+    skip: number = 0,
+    from?: Date,
+    userId?: number
+  ) {
+    if (take > 50) {
+      take = 50;
+    }
+    let data = await this.db.$queryRaw(`
+    SELECT count(*) as plays, sum(s.duration_ms)/(1000*60) as playtime, s.name, s.uri FROM plays 
+    LEFT JOIN songs s on s.songid = plays.songid
+WHERE ${userId ? "userid = " + userId + " AND" : ""}
+${
+  from
+    ? `plays.time BETWEEN '${from.toISOString()}' AND '${to.toISOString()}'`
+    : `plays.time <'${to.toISOString()}'`
+}
+GROUP BY a.artistid
+ORDER BY plays DESC
+LIMIT ${take}
+OFFSET ${skip}`);
+    let songs = await spotify.tracks(data.map((p: any) => p.uri.split(":")[2]));
+    return songs.map((song: any, index: number) => {
+      return new GQLArtistStats(
+        new GQLArtist(song.name, song.images),
+        data[index].playtime,
+        data[index].plays
+      );
+    });
   }
 }

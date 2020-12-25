@@ -34,6 +34,17 @@ export class SpotifyClient {
   public async artist(id: string) {
     return (await this.requestData("/artists/" + id)).data;
   }
+  private toCSL(ids: string[]) {
+    return ids.reduce((prev, val) => prev + (prev.length ? "," : "") + val, "");
+  }
+  public async tracks(ids: string[]) {
+    return (await this.requestData("/tracks", { ids: this.toCSL(ids) })).data
+      .tracks;
+  }
+  public async artists(ids: string[]) {
+    return (await this.requestData("/artists", { ids: this.toCSL(ids) })).data
+      .artists;
+  }
   public async album(id: string) {
     return (await this.requestData("/albums/" + id)).data;
   }

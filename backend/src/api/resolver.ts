@@ -24,6 +24,37 @@ export const resolvers = {
     },
   },
   User: {
+    mostPlayedSongs: async (
+      parent: GQLUser,
+      args: { [key: string]: any },
+      context: SContext
+    ) => {
+      let stats = new Stats(context.db);
+      return await stats.mostPlayedSongs(
+        new SpotifyClient(parent.token),
+        args.to ? new Date(args.to) : undefined,
+        args.take,
+        args.skip,
+        args.from ? new Date(args.from) : undefined,
+        context.user?.uid
+      );
+    },
+
+    mostPlayedArtists: async (
+      parent: GQLUser,
+      args: { [key: string]: any },
+      context: SContext
+    ) => {
+      let stats = new Stats(context.db);
+      return await stats.mostPlayedArtists(
+        new SpotifyClient(parent.token),
+        args.to ? new Date(args.to) : undefined,
+        args.take,
+        args.skip,
+        args.from ? new Date(args.from) : undefined,
+        context.user?.uid
+      );
+    },
     stats: async (
       parent: GQLUser,
       args: { [key: string]: any },

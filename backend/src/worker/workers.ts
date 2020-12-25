@@ -62,7 +62,7 @@ export class UserWorker {
       "Starting sync of",
       job.data.userId,
       "on",
-      new Date().toISOString
+      new Date().toISOString()
     );
     let lastPlay = await this.db.$queryRaw(
       `SELECT max(time) FROM plays as p WHERE p.userId=${job.data.userId}`
@@ -95,7 +95,7 @@ export class UserWorker {
       "Starting refresh of",
       job.data.userId,
       "on",
-      new Date().toISOString
+      new Date().toISOString()
     );
     let user = await this.db.users.findFirst({
       where: {

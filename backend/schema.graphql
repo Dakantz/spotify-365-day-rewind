@@ -1,28 +1,32 @@
 type Error {
   message: String
 }
-
+type Image {
+  url: String!
+  height: Int!
+  width: Int!
+}
 type Artist {
   name: String!
-  cover: String!
+  cover: [Image]!
   songs: [Song]!
 }
 
 type Song {
   name: String!
-  cover: String!
+  cover: [Image]!
   artist: [Artist]!
 }
 
 type SongInfo {
-  playCount: Int!
-  playMinutes: Float!
+  plays: Int!
+  minutes: Float!
   song: Song!
 }
 
 type ArtistInfo {
-  playCount: Int!
-  playMinutes: Float!
+  plays: Int!
+  minutes: Float!
   artist: Artist!
 }
 
@@ -39,8 +43,8 @@ type Status {
 type StatPoint {
   minutes: Float
   plays: Int
-  artists: [Artist]!
-  songs: [Song]!
+  artists: [ArtistInfo]!
+  songs: [SongInfo]!
   time: Int!
 }
 
@@ -62,8 +66,13 @@ type Stats {
 type User {
   name: String!
   email: String!
-  mostPlayedSongs(take: Int, skip: Int): [Song]!
-  mostPlayedArtists(take: Int, skip: Int): [Artist]!
+  mostPlayedSongs(take: Int, skip: Int, from: String, to: String): [SongInfo]!
+  mostPlayedArtists(
+    take: Int
+    skip: Int
+    from: String
+    to: String
+  ): [ArtistInfo]!
   status: Status!
   stats(from: String, to: String, steps: Int!, scale: Scale!): Stats!
   token: String!
