@@ -5,11 +5,14 @@
         v-if="$apollo.loading"
         indeterminate
       ></v-progress-linear>
-      <div v-else-if="this.statistics && this.timeframe">{{ selectedStat }}</div>
+      <div v-else-if="this.statistics && this.timeframe">
+        {{ selectedStat }}
+      </div>
     </v-card-title>
     <v-card-text>
-      Total <span class="inText" v-if="statistics">{{ statistics }}</span>
-      <span class="inText" v-else>...</span> within last
+      Total&nbsp;
+      <span class="inText" v-if="statistics">{{ statistics }}</span>
+      <span class="inText" v-else>...</span> within last&nbsp;
       <span class="inText" v-if="timeframe">{{ timeframe.text }}</span>
       <span class="inText" v-else>...</span>
     </v-card-text>
@@ -94,7 +97,5 @@ export default {
 
 <style>
 .inText {
-  padding-left: 1pt;
-  padding-right: 1pt;
 }
 </style>

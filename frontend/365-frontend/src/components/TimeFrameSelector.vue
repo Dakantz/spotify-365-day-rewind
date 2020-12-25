@@ -64,7 +64,7 @@ export default {
         },
         {
           text: "Year",
-          interval: 1000 * 60 * 60 * 24 * 1,
+          interval: 1000 * 60 * 60 * 24 * 356,
           scale: "YEAR",
           subInterval: 1000 * 60 * 60 * 24 * 31,
           subScale: "MONTH",

@@ -9,17 +9,24 @@
           <chart-widget class="widget" :id="`chart-1`" />
         </v-col>
       </v-row>
+      <v-row>
+        <v-col>
+          <top-widget class="widget" :id="`top-1`" />
+        </v-col>
+      </v-row>
     </v-container>
   </div>
 </template>
 
 <script>
 import ChartWidget from "../components/ChartWidget.vue";
+import TopWidget from "../components/TopWidget.vue";
 import TotalWidget from "../components/TotalWidget.vue";
 export default {
   components: {
     TotalWidget,
     ChartWidget,
+    TopWidget,
   },
 };
 </script>

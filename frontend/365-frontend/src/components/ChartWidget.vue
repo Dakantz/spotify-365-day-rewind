@@ -2,7 +2,7 @@
   <v-card >
     <v-card-title> </v-card-title>
     <v-card-text>
-      <bar-chart :options="chartOptions" :chartData="chartData" height="250px"> </bar-chart>
+      <bar-chart :options="chartOptions" :chartData="chartData" :height="250"> </bar-chart>
     </v-card-text>
     <v-card-actions>
       <statistics-selector

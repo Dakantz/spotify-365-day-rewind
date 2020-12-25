@@ -176,7 +176,7 @@ OFFSET ${skip}`
     let songs = await spotify.tracks(data.map((p: any) => p.uri.split(":")[2]));
     return songs.map((song: any, index: number) => {
       return new GQLSongStats(
-        new GQLSSong(song.name, song.images),
+        new GQLSSong(song.name, song.album.images),
         data[index].playtime,
         data[index].plays
       );
