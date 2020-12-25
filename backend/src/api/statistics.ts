@@ -3,6 +3,8 @@ import { SpotifyClient } from "../shared";
 import {
   GQLArtist,
   GQLArtistStats,
+  GQLSongStats,
+  GQLSSong,
   GQLStatPoint,
   GQLStats,
   ScaleSteps,
@@ -157,7 +159,7 @@ OFFSET ${skip}`);
     if (take > 50) {
       take = 50;
     }
-    let data = await this.db.$queryRaw(`
+    let query=`
     SELECT count(*) as plays, sum(s.duration_ms)/(1000*60) as playtime, s.name, s.uri FROM plays 
     LEFT JOIN songs s on s.songid = plays.songid
 WHERE ${userId ? "userid = " + userId + " AND" : ""}
@@ -166,14 +168,15 @@ ${
     ? `plays.time BETWEEN '${from.toISOString()}' AND '${to.toISOString()}'`
     : `plays.time <'${to.toISOString()}'`
 }
-GROUP BY a.artistid
+GROUP BY s.songid
 ORDER BY plays DESC
 LIMIT ${take}
-OFFSET ${skip}`);
+OFFSET ${skip}`
+    let data = await this.db.$queryRaw(query);
     let songs = await spotify.tracks(data.map((p: any) => p.uri.split(":")[2]));
     return songs.map((song: any, index: number) => {
-      return new GQLArtistStats(
-        new GQLArtist(song.name, song.images),
+      return new GQLSongStats(
+        new GQLSSong(song.name, song.images),
         data[index].playtime,
         data[index].plays
       );
