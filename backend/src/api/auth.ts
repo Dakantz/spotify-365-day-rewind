@@ -89,36 +89,30 @@ export async function createUser(
         },
       })
     ).userid;
-  }
-  let repeatableJobs = await queue.getRepeatableJobs();
-  for (let job of repeatableJobs) {
-    try {
-      if (parseInt(job.key.split(":")[2]) == id) {
-        await queue.removeRepeatableByKey(job.key);
+
+    await queue.add(
+      RefreshTokenJob.jobName,
+      new RefreshTokenJob(id, respone.refresh_token, client_id, client_secret),
+      {
+        jobId: `token:${id}`,
+        repeat: {
+          every: 1000*60*60, //60 min
+        },
       }
-    } catch (error) {
-      console.warn("Failed to remove job", error);
-    }
-  }
-  await queue.add(
-    RefreshTokenJob.jobName,
-    new RefreshTokenJob(id, respone.refresh_token, client_id, client_secret),
-    {
-      jobId: `token:${id}`,
+    );
+
+    await queue.add(SyncPlaysJob.jobName, new SyncPlaysJob(id), {
+      jobId: `play:${id}`,
       repeat: {
-        every: 1000, //10 min
+        every: 1000*60*5, //10 min
       },
-    }
-  );
-  await queue.add(SyncPlaysJob.jobName, new SyncPlaysJob(id), {
-    jobId: `play:${id}`,
-    repeat: {
-      every: 1000, //10 min
-    },
-  });
+    });
+  }
+
   await queue.add(InitJob.jobName, new InitJob(id, respone.access_token), {
     jobId: `init:${id}`,
   });
+
   let jwt_data = new UserTokenData(id, me.email, me.display_name);
   return new GQLAuthentificationResponse(
     sign(JSON.stringify(jwt_data), process.env.JWT_SECRET as string),

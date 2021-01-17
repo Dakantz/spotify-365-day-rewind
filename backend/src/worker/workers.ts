@@ -1,11 +1,20 @@
 import { PrismaClient } from "@prisma/client";
-import { Job } from "bull";
+import { Job, Queue } from "bull";
 import { SpotifyClient, SpotifyTokenClient } from "../shared";
 import { SpotifySyncHelper } from "../shared/helpers";
 import { InitJob, RefreshTokenJob, SyncPlaysJob } from "../shared/types";
 
 export class UserWorker {
-  constructor(public db: PrismaClient) {}
+  constructor(public db: PrismaClient, private queue:Queue) {}
+  async clearJobs() {
+    console.log("Deleting old jobs:");
+    let cleaned = await this.queue.clean(60000, "completed");
+    let cleaned_failed = await this.queue.clean(60000, "failed");
+    for(const job of [...cleaned, ...cleaned_failed]) {
+      console.log("deleted ", job);
+    }
+    console.log("Deleted old jobs...");
+  }
   async addPlayed(items: any[], helper: SpotifySyncHelper, userId: number) {
     for (let play of items) {
       console.log("Adding old play:", play);
