@@ -33,7 +33,7 @@ Re-adding all jobs
     }
   }
   let users = await db.users.findMany();
-  
+
   let client_id = process.env.SPOTIFY_CLIENT_ID
     ? process.env.SPOTIFY_CLIENT_ID
     : "";
@@ -44,18 +44,38 @@ Re-adding all jobs
   for (let user of users) {
     await queue.add(
       RefreshTokenJob.jobName,
-      new RefreshTokenJob(user.userid, user.refreshtoken, client_id, client_secret),
+      new RefreshTokenJob(
+        user.userid,
+        user.refreshtoken,
+        client_id,
+        client_secret
+      ),
+      {
+        jobId: `token:${user.userid}`,
+      }
+    );
+    await queue.add(SyncPlaysJob.jobName, new SyncPlaysJob(user.userid), {
+      jobId: `play:${user.userid}`,
+    });
+    await queue.add(
+      RefreshTokenJob.jobName,
+      new RefreshTokenJob(
+        user.userid,
+        user.refreshtoken,
+        client_id,
+        client_secret
+      ),
       {
         jobId: `token:${user.userid}`,
         repeat: {
-          every: 1000*60*60, //60 min
+          every: 1000 * 60 * 60, //60 min
         },
       }
     );
     await queue.add(SyncPlaysJob.jobName, new SyncPlaysJob(user.userid), {
       jobId: `play:${user.userid}`,
       repeat: {
-        every: 1000*60*5, //5 min
+        every: 1000 * 60 * 5, //5 min
       },
     });
   }
