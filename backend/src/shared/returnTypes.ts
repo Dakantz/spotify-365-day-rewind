@@ -6,6 +6,12 @@ export class GQLError {
   }
   constructor(public message: string) {}
 }
+export class GQLMessage {
+  get __typename() {
+    return "SimpleMessage";
+  }
+  constructor(public message: string) {}
+}
 export class GQLUser {
   get __typename() {
     return "User";
