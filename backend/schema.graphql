@@ -83,14 +83,23 @@ type AuthentificationResponse {
   token: String!
   user: User!
 }
-
+type SimpleMessage {
+  message: String!
+}
 union AuthentificationResponseAndError = AuthentificationResponse | Error
+union SimpleResponse = SimpleMessage | Error
+
+type UserMutations {
+  delete: SimpleResponse!
+  triggerExport: SimpleResponse!
+}
 
 type Mutation {
   registerOrLogin(
     code: String!
     redirectUrl: String!
   ): AuthentificationResponseAndError!
+  me: UserMutations!
 }
 
 type Query {

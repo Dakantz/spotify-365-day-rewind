@@ -15,3 +15,12 @@ export class SyncPlaysJob {
   public static jobName = "sync-plays";
   constructor(public userId: number) {}
 }
+
+export class DeleteUserJob {
+  public static jobName = "delete-me";
+  constructor(public userId: number) {}
+}
+export class ExportMeJob {
+  public static jobName = "export-me";
+  constructor(public userId: number) {}
+}

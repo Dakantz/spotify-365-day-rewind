@@ -1,15 +1,15 @@
 import { PrismaClient } from "@prisma/client";
 import Bull, { Job } from "bull";
 import { SpotifyClient } from "../shared";
-import { InitJob, RefreshTokenJob, SyncPlaysJob } from "../shared/types";
+import { DeleteUserJob, ExportMeJob, InitJob, RefreshTokenJob, SyncPlaysJob } from "../shared/types";
 import { UserWorker } from "./workers";
 
 (async () => {
   const db = new PrismaClient();
   const queue = new Bull("worker", {
     redis: {
-      host:process.env.REDIS ? process.env.REDIS : undefined,
-    }
+      host: process.env.REDIS ? process.env.REDIS : "localhost",
+    },
   });
   const worker = new UserWorker(db, queue);
   queue.on("error", (err) => {
@@ -22,6 +22,8 @@ import { UserWorker } from "./workers";
   queue.process(InitJob.jobName, worker.processInit.bind(worker));
   queue.process(SyncPlaysJob.jobName, worker.processSync.bind(worker));
   queue.process(RefreshTokenJob.jobName, worker.processRefresh.bind(worker));
+  queue.process(ExportMeJob.jobName, worker.processExport.bind(worker));
+  queue.process(DeleteUserJob.jobName, worker.processDeletion.bind(worker));
 
   /*
 Re-adding all jobs

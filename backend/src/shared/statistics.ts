@@ -1,5 +1,5 @@
 import { PrismaClient } from "@prisma/client";
-import { SpotifyClient } from "../shared";
+import { SpotifyClient } from ".";
 import {
   GQLArtist,
   GQLArtistStats,

@@ -4,11 +4,11 @@ import Bull, { Queue } from "bull";
 import { verify, sign } from "jsonwebtoken";
 import { SpotifyClient, SpotifyTokenClient } from "../shared";
 import { InitJob, RefreshTokenJob, SyncPlaysJob } from "../shared/types";
-import { GQLAuthentificationResponse, GQLUser } from "./returnTypes";
+import { GQLAuthentificationResponse, GQLUser } from "../shared/returnTypes";
 const db = new PrismaClient();
 const queue = new Bull("worker", {
   redis: {
-    host:process.env.REDIS ? process.env.REDIS : undefined,
+    host:process.env.REDIS ? process.env.REDIS : "localhost",
   }
 });
 export class UserTokenData {

@@ -1,0 +1,23 @@
+{
+	"version": "2.0.0",
+	"tasks": [
+		{
+			"type": "npm",
+			"script": "build",
+			"path": "backend/",
+			"group": "build",
+			"problemMatcher": [],
+			"label": "npm: build - backend",
+			"detail": "npx tsc"
+		},
+		{
+			"type": "npm",
+			"script": "build",
+			"path": "worker/",
+			"group": "build",
+			"problemMatcher": [],
+			"label": "npm: build - worker",
+			"detail": "npx tsc"
+		}
+	]
+}
