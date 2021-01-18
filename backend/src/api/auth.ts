@@ -7,7 +7,9 @@ import { InitJob, RefreshTokenJob, SyncPlaysJob } from "../shared/types";
 import { GQLAuthentificationResponse, GQLUser } from "./returnTypes";
 const db = new PrismaClient();
 const queue = new Bull("worker", {
-  redis: process.env.REDIS ? process.env.REDIS : undefined,
+  redis: {
+    host:process.env.REDIS ? process.env.REDIS : undefined,
+  }
 });
 export class UserTokenData {
   constructor(public uid: number, public email: string, public name: string) {}
