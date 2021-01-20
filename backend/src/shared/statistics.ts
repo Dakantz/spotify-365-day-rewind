@@ -70,6 +70,7 @@ export class Stats {
     WHERE ${parent.userId ? "userid = " + parent.userId + " AND" : ""}
      plays.time BETWEEN '${parent.from}' AND '${parent.to}'
     GROUP BY timemeaser 
+    ORDER BY timemeaser ASC
         `;
     let data = await this.db.$queryRaw(query);
 
@@ -133,7 +134,7 @@ ${
     : `plays.time <'${to.toISOString()}'`
 }
 GROUP BY a.artistid
-ORDER BY plays DESC
+ORDER BY plays DESC, playtime DESC
 LIMIT ${take}
 OFFSET ${skip}`);
     let artists = await spotify.artists(

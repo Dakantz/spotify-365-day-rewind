@@ -1,7 +1,7 @@
 import { users } from "@prisma/client";
 import { IResolvers } from "graphql-tools";
 import { SpotifyClient } from "../shared";
-import { DeleteUserJob } from "../shared/types";
+import { DeleteUserJob, ExportMeJob } from "../shared/types";
 import { createUser, SContext } from "./auth";
 import { GQLError, GQLMessage, GQLStats, GQLUser } from "../shared/returnTypes";
 import { Stats } from "../shared/statistics";
@@ -101,49 +101,47 @@ export const resolvers = {
     },
   },
   Mutation: {
-    me: {
-      delete: async (
-        parent: any,
-        args: { [key: string]: string },
-        context: SContext,
-        info: any
-      ) => {
-        try {
-          if (context.user) {
-            context.queue.add(
-              DeleteUserJob.jobName,
-              new DeleteUserJob(context.user.uid)
-            );
-            return new GQLMessage("Started deletion!");
-          } else {
-            return new GQLError("Can't delete if not logged in!");
+    me: () => {
+      return {
+        delete: async (
+          parent: any,
+          context: SContext,
+          info: any
+        ) => {
+          try {
+            if (context.user) {
+              context.queue.add(
+                DeleteUserJob.jobName,
+                new DeleteUserJob(context.user.uid)
+              );
+              return new GQLMessage("Started deletion!");
+            } else {
+              return new GQLError("Can't delete if not logged in!");
+            }
+          } catch (error) {
+            console.error("Error creating user", error);
+            return new GQLError(error.message);
           }
-        } catch (error) {
-          console.error("Error creating user", error);
-          return new GQLError(error.message);
-        }
-      },
-      triggerExport: async (
-        parent: any,
-        args: { [key: string]: string },
-        context: SContext,
-        info: any
-      ) => {
-        try {
-          if (context.user) {
-            await context.queue.add(
-              DeleteUserJob.jobName,
-              new DeleteUserJob(context.user.uid)
-            );
-            return new GQLMessage("Triggered export");
-          } else {
-            return new GQLError("Can't delete if not logged in!");
+        },
+        triggerExport: async (parent: any, context: SContext, info: any) => {
+          try {
+            if (context.user) {
+              await context.queue.add(
+                ExportMeJob.jobName,
+                new ExportMeJob(context.user.uid)
+              );
+              return new GQLMessage(
+                "Triggered export - you will receive an email when its ready!"
+              );
+            } else {
+              return new GQLError("Can't export if not logged in!");
+            }
+          } catch (error) {
+            console.error("Error creating user", error);
+            return new GQLError(error.message);
           }
-        } catch (error) {
-          console.error("Error creating user", error);
-          return new GQLError(error.message);
-        }
-      },
+        },
+      };
     },
     registerOrLogin: async (
       parent: any,

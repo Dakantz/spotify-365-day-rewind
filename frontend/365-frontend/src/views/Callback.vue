@@ -1,7 +1,7 @@
 <template>
   <div class="callback">
-    <h1>Welcome back!</h1>
-    <h2>We are getting everything ready, hold tight!</h2>
+    <div class="text-h2">Welcome back!</div>
+    <div class="text-h3">We are getting everything ready, hold tight!</div>
     <div v-if="error">
       Failed to sign you up, please try again!, reason: {{ error }}
     </div>
@@ -24,7 +24,7 @@ export default {
     try {
       let query = this.$route.query;
       if (query.error) {
-        this.errpr = query.error;
+        this.error = query.error;
       } else {
         let userData = await this.$apollo.mutate({
           // Query

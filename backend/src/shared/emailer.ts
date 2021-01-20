@@ -17,14 +17,14 @@ export class Emailer {
   constructor(
     private credentials: SMTPConnection.Options,
     private defaultFrom: Address,
-    public basePath = "./email-templates"
+    public basePath = "../../email-templates"
   ) {
     this.transport = nodemailer.createTransport(credentials);
     this.transport.verify(function (error, success) {
       if (error) {
         console.log(error);
       } else {
-        console.log("Server is ready to take our messages");
+        console.log("Email Server is ready to take our messages");
       }
     });
   }
@@ -37,7 +37,7 @@ export class Emailer {
     attachments: Attachment[] = []
   ) {
     let email_template = fs.readFileSync(
-      path.join(this.basePath, templatePath),
+      path.join(__dirname, this.basePath, templatePath),
       { encoding: "utf8" }
     );
     let rendered = mustache.render(email_template, data);
@@ -51,7 +51,6 @@ export class Emailer {
       attachments,
       html: rendered,
       subject,
-
     };
     this.transport.sendMail(message);
   }

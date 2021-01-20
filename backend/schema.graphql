@@ -1,5 +1,5 @@
 type Error {
-  message: String
+  message: String!
 }
 type Image {
   url: String!
