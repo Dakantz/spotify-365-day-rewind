@@ -64,12 +64,14 @@ model songs {
 }
 
 model users {
-  userid       Int     @id @default(autoincrement())
-  name         String
-  email        String
-  token        String
-  refreshtoken String
-  redirecturl  String
-  uri          String
-  plays        plays[]
+  userid         Int     @id @default(autoincrement())
+  name           String
+  email          String
+  token          String
+  refreshtoken   String
+  redirecturl    String
+  uri            String
+  report_weekly  Boolean @default(false)
+  report_monthly Boolean @default(false)
+  plays          plays[]
 }

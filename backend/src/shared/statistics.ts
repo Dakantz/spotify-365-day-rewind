@@ -120,7 +120,7 @@ WHERE ${parent.userId ? "userid = " + parent.userId + " AND" : ""}
     skip: number = 0,
     from?: Date,
     userId?: number
-  ) {
+  ): Promise<GQLArtist[]> {
     if (take > 50) {
       take = 50;
     }
@@ -156,11 +156,11 @@ OFFSET ${skip}`);
     skip: number = 0,
     from?: Date,
     userId?: number
-  ) {
+  ): Promise<GQLSSong[]> {
     if (take > 50) {
       take = 50;
     }
-    let query=`
+    let query = `
     SELECT count(*) as plays, sum(s.duration_ms)/(1000*60) as playtime, s.name, s.uri FROM plays 
     LEFT JOIN songs s on s.songid = plays.songid
 WHERE ${userId ? "userid = " + userId + " AND" : ""}
@@ -172,7 +172,7 @@ ${
 GROUP BY s.songid
 ORDER BY plays DESC
 LIMIT ${take}
-OFFSET ${skip}`
+OFFSET ${skip}`;
     let data = await this.db.$queryRaw(query);
     let songs = await spotify.tracks(data.map((p: any) => p.uri.split(":")[2]));
     return songs.map((song: any, index: number) => {

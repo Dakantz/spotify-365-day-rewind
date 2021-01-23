@@ -1,7 +1,7 @@
 import { PrismaClient } from "@prisma/client";
 import Bull, { Job } from "bull";
 import { SpotifyClient } from "../shared";
-import { DeleteUserJob, ExportMeJob, InitJob, RefreshTokenJob, SyncPlaysJob } from "../shared/types";
+import { DeleteUserJob, ExportMeJob, InitJob, MonthlyReport, RefreshTokenJob, SyncPlaysJob, WeeklyReport } from "../shared/types";
 import { UserWorker } from "./workers";
 
 (async () => {
@@ -24,6 +24,9 @@ import { UserWorker } from "./workers";
   queue.process(RefreshTokenJob.jobName, worker.processRefresh.bind(worker));
   queue.process(ExportMeJob.jobName, worker.processExport.bind(worker));
   queue.process(DeleteUserJob.jobName, worker.processDeletion.bind(worker));
+  queue.process(WeeklyReport.jobName, worker.processExport.bind(worker));
+  queue.process(MonthlyReport.jobName, worker.processDeletion.bind(worker));
+
 
   /*
 Re-adding all jobs
@@ -44,6 +47,17 @@ Re-adding all jobs
   let client_secret = process.env.SPOTIFY_CLIENT_SECRET
     ? process.env.SPOTIFY_CLIENT_SECRET
     : "";
+
+  await queue.add(WeeklyReport.jobName,{
+    repeat:{
+      cron:"5 8 * * Sun"
+    }
+  })
+  await queue.add(MonthlyReport.jobName,{
+    repeat:{
+      cron:"0 0 1 * *"
+    }
+  })
 
   for (let user of users) {
     await queue.add(

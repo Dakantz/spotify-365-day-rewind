@@ -1,0 +1,19 @@
+<h1>Your {{info.resolution}} report is in: you spent {{stats.minutes}} listening to music.</h1>
+
+This amounted to {{stats.plays}} plays. Your top artist was {{stats.topartist.name}} and top played song
+{{stats.topsong.name}} with {{stats.topsong.plays}} plays.
+
+<h2>Your top 5 artists</h2>
+<ul>
+{{#stats.topartists}}
+<li>{{name}} - {{plays}} plays</li>
+{{/stats.topartists}}
+</ul>
+
+
+<h2>Your top 5 songs</h2>
+<ul>
+{{#stats.topsongs}}
+<li>{{name}} - {{plays}} plays</li>
+{{/stats.topsongs}}
+</ul>

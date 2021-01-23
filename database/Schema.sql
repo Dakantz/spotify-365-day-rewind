@@ -12,6 +12,8 @@ CREATE TABLE Users(
     token VARCHAR(512) NOT NULL,
     refreshToken VARCHAR(512) NOT NULL,
     redirectUrl VARCHAR(512) NOT NULL,
+    report_weekly BOOLEAN DEFAULT(FALSE) NOT NULL,
+    report_monthly BOOLEAN DEFAULT(FALSE) NOT NULL,
     uri VARCHAR(256) NOT NULL
 );
 CREATE TABLE Genres(

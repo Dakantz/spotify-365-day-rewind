@@ -1,10 +1,10 @@
-import { PrismaClient } from "@prisma/client";
+import { PrismaClient, users } from "@prisma/client";
 import { Job, Queue } from "bull";
 import { fixSchemaAst } from "graphql-tools";
 import { SpotifyClient, SpotifyTokenClient } from "../shared";
 import { Emailer } from "../shared/emailer";
 import { SpotifySyncHelper } from "../shared/helpers";
-import { GQLStats } from "../shared/returnTypes";
+import { GQLStats, ScaleSteps } from "../shared/returnTypes";
 import { Stats } from "../shared/statistics";
 import * as fs from "fs";
 import * as path from "path";
@@ -16,7 +16,9 @@ import {
   InitJob,
   RefreshTokenJob,
   SyncPlaysJob,
+  WeeklyReport,
 } from "../shared/types";
+import { NumericLiteral } from "typescript";
 
 export class UserWorker {
   private mailer: Emailer;
@@ -226,7 +228,6 @@ export class UserWorker {
       });
       if (user) {
         console.log("Exporting ", user.name);
-        let statsEngine = new Stats(this.db);
         let dir = fs.mkdtempSync(`export-${user.userid}`);
         let plays = await this.db.plays.findMany({
           where: {
@@ -319,5 +320,75 @@ export class UserWorker {
       console.error("error during user export", e);
       throw e;
     }
+  }
+  async processWeeklyReport(job: Job<WeeklyReport>) {
+    let users = await this.db.users.findMany({
+      where: {
+        report_weekly: true,
+      },
+    });
+    await this.processReport("weekly", "WEEK", 1, users);
+  }
+  async processReport(
+    scale: string,
+    scaleType: ScaleSteps,
+    steps: number,
+    users: users[]
+  ) {
+    try {
+      for (let user of users) {
+        let statsEngine = new Stats(this.db);
+        let stats = await statsEngine.stats(scaleType, steps, user.userid);
+        let total = await statsEngine.total(stats);
+        let spotify = new SpotifyClient(user.token);
+        let topartists = await statsEngine.mostPlayedArtists(
+          spotify,
+          new Date(stats.to),
+          5,
+          0,
+          new Date(stats.from),
+          user.userid
+        );
+        let topsongs = await statsEngine.mostPlayedSongs(
+          spotify,
+          new Date(stats.to),
+          5,
+          0,
+          new Date(stats.from),
+          user.userid
+        );
+        let data = {
+          user,
+          info: {
+            resolution: scale,
+          },
+          stats: {
+            topsongs,
+            topartists,
+            topartist: topartists.length > 0 ? topartists[0] : null,
+            topsong: topsongs.length > 0 ? topsongs[0] : null,
+            ...total,
+          },
+        };
+        await this.mailer.sendMail(
+          user.name,
+          user.email,
+          `[365 days of rewind] Your ${scale} report`,
+          "report.html",
+          data
+        );
+      }
+    } catch (error) {
+      console.error("Error processing report", error);
+      throw error;
+    }
+  }
+  async processMonthlyReport(job: Job<WeeklyReport>) {
+    let users = await this.db.users.findMany({
+      where: {
+        report_monthly: true,
+      },
+    });
+    await this.processReport("monthly", "MONTH", 1, users);
   }
 }

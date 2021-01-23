@@ -24,3 +24,12 @@ export class ExportMeJob {
   public static jobName = "export-me";
   constructor(public userId: number) {}
 }
+//5 8 * * Sun
+export class WeeklyReport {
+  public static jobName = "report-weekly";
+  constructor() {}
+}
+export class MonthlyReport {
+  public static jobName = "report-monthly";
+  constructor() {}
+}
