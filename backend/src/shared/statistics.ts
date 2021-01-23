@@ -27,7 +27,7 @@ export class Stats {
         scaleSize = 1000 * 60 * 60 * 24 * 31;
         break;
       case "WEEK":
-        scaleSize = 1000 * 60 * 60 * 7;
+        scaleSize = 1000 * 60 * 60 * 24 * 7;
         break;
     }
     return scaleSize;

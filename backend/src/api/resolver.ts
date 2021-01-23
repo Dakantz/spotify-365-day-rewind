@@ -70,6 +70,25 @@ export const resolvers = {
         args.to ? new Date(args.to) : undefined
       );
     },
+    async reportIntervals(
+      parent: GQLUser,
+      args: { [key: string]: any },
+      context: SContext
+    ) {
+      let intervals: string[] = [];
+      let user = await context.db.users.findFirst({
+        where: {
+          userid: context.user?.uid,
+        },
+      });
+      if (user?.report_monthly) {
+        intervals.push("MONTH");
+      }
+      if (user?.report_weekly) {
+        intervals.push("WEEK");
+      }
+      return intervals;
+    },
   },
   Query: {
     clientToken: (
@@ -103,15 +122,50 @@ export const resolvers = {
   Mutation: {
     me: () => {
       return {
-        delete: async (
-          parent: any,
+        async setReportInterval(
+          args: { [key: string]: string | boolean },
           context: SContext,
           info: any
-        ) => {
+        ) {
+          if (context.user) {
+            try {
+              switch (args.scale) {
+                case "MONTH":
+                  await context.db.users.update({
+                    where: { userid: context.user.uid },
+                    data: {
+                      report_monthly:
+                        (args.val as boolean) || args.val == "true",
+                    },
+                  });
+                  break;
+                case "WEEK":
+                  await context.db.users.update({
+                    where: { userid: context.user.uid },
+                    data: {
+                      report_weekly:
+                        (args.val as boolean) || args.val == "true",
+                    },
+                  });
+                  break;
+                default:
+                  return new GQLError(
+                    "Other granularity currently unsupported!"
+                  );
+              }
+              return new GQLMessage("Success!");
+            } catch (e) {
+              console.error("Error during update on report", e);
+            }
+          } else {
+            return new GQLError("Must be logged in!");
+          }
+        },
+        delete: async (parent: any, context: SContext, info: any) => {
           try {
             if (context.user) {
-              context.queue.add(
-                DeleteUserJob.jobName,
+              await context.queues[DeleteUserJob.jobName].add(
+                `delete-${context.user.uid}`,
                 new DeleteUserJob(context.user.uid)
               );
               return new GQLMessage("Started deletion!");
@@ -126,8 +180,8 @@ export const resolvers = {
         triggerExport: async (parent: any, context: SContext, info: any) => {
           try {
             if (context.user) {
-              await context.queue.add(
-                ExportMeJob.jobName,
+              await context.queues[ExportMeJob.jobName].add(
+                `delete-${context.user.uid}`,
                 new ExportMeJob(context.user.uid)
               );
               return new GQLMessage(

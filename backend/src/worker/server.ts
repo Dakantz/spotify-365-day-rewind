@@ -1,113 +1,177 @@
 import { PrismaClient } from "@prisma/client";
-import Bull, { Job } from "bull";
-import { SpotifyClient } from "../shared";
-import { DeleteUserJob, ExportMeJob, InitJob, MonthlyReport, RefreshTokenJob, SyncPlaysJob, WeeklyReport } from "../shared/types";
+import { Job, Queue, QueueScheduler, Worker } from "bullmq";
+import IORedis from "ioredis";
+import { buildQueueMap, SpotifyClient } from "../shared";
+import {
+  DeleteUserJob,
+  ExportMeJob,
+  InitJob,
+  MonthlyReport,
+  RefreshTokenJob,
+  SyncPlaysJob,
+  WeeklyReport,
+} from "../shared/types";
 import { UserWorker } from "./workers";
-
 (async () => {
+  const connection = new IORedis({
+    host: process.env.REDIS ? process.env.REDIS : "localhost",
+  });
+  connection.setMaxListeners(30);
   const db = new PrismaClient();
-  const queue = new Bull("worker", {
-    redis: {
-      host: process.env.REDIS ? process.env.REDIS : "localhost",
-    },
-  });
-  const worker = new UserWorker(db, queue);
-  queue.on("error", (err) => {
-    console.error("error during processing:", err);
-  });
+  const worker = new UserWorker(db);
 
-  queue.on("removed", (err) => {
-    console.error("removed:", err);
-  });
-  queue.process(InitJob.jobName, worker.processInit.bind(worker));
-  queue.process(SyncPlaysJob.jobName, worker.processSync.bind(worker));
-  queue.process(RefreshTokenJob.jobName, worker.processRefresh.bind(worker));
-  queue.process(ExportMeJob.jobName, worker.processExport.bind(worker));
-  queue.process(DeleteUserJob.jobName, worker.processDeletion.bind(worker));
-  queue.process(WeeklyReport.jobName, worker.processExport.bind(worker));
-  queue.process(MonthlyReport.jobName, worker.processDeletion.bind(worker));
+  let workers = [
+    new Worker("cleaner", worker.clearJobs.bind(worker), { connection }),
+    new Worker(InitJob.jobName, worker.processInit.bind(worker), {
+      connection,
+    }),
+    new Worker(SyncPlaysJob.jobName, worker.processSync.bind(worker), {
+      connection,
+    }),
+    new Worker(RefreshTokenJob.jobName, worker.processRefresh.bind(worker), {
+      connection,
+    }),
+    new Worker(ExportMeJob.jobName, worker.processExport.bind(worker), {
+      connection,
+    }),
+    new Worker(DeleteUserJob.jobName, worker.processDeletion.bind(worker), {
+      connection,
+    }),
+    new Worker(WeeklyReport.jobName, worker.processWeeklyReport.bind(worker), {
+      connection,
+    }),
+    new Worker(
+      MonthlyReport.jobName,
+      worker.processMonthlyReport.bind(worker),
+      { connection }
+    ),
+  ];
+  const schedulers = [
+    new QueueScheduler("cleaner", { connection }),
 
-
-  /*
-Re-adding all jobs
-*/
-  let repeatableJobs = await queue.getRepeatableJobs();
-  for (let job of repeatableJobs) {
-    try {
-      await queue.removeRepeatableByKey(job.key);
-    } catch (error) {
-      console.warn("Failed to remove job", error);
-    }
-  }
-  let users = await db.users.findMany();
-
-  let client_id = process.env.SPOTIFY_CLIENT_ID
-    ? process.env.SPOTIFY_CLIENT_ID
-    : "";
-  let client_secret = process.env.SPOTIFY_CLIENT_SECRET
-    ? process.env.SPOTIFY_CLIENT_SECRET
-    : "";
-
-  await queue.add(WeeklyReport.jobName,{
-    repeat:{
-      cron:"5 8 * * Sun"
-    }
-  })
-  await queue.add(MonthlyReport.jobName,{
-    repeat:{
-      cron:"0 0 1 * *"
-    }
-  })
-
-  for (let user of users) {
-    await queue.add(
+    new QueueScheduler(InitJob.jobName, {
+      connection,
+    }),
+    new QueueScheduler(SyncPlaysJob.jobName, {
+      connection,
+    }),
+    new QueueScheduler(
       RefreshTokenJob.jobName,
-      new RefreshTokenJob(
-        user.userid,
-        user.refreshtoken,
-        client_id,
-        client_secret
-      ),
-      {
-        jobId: `token:${user.userid}`,
+
+      { connection }
+    ),
+    new QueueScheduler(ExportMeJob.jobName, {
+      connection,
+    }),
+    new QueueScheduler(DeleteUserJob.jobName, { connection }),
+    new QueueScheduler(WeeklyReport.jobName, { connection }),
+    new QueueScheduler(MonthlyReport.jobName, { connection }),
+  ];
+
+  worker.workers = workers;
+
+  if (!(await connection.get("jobs-initialized"))) {
+    /*
+  Re-adding all jobs
+  */
+    console.log("Initializing jobs!");
+    let queues = buildQueueMap(connection);
+    for (let q in queues) {
+      let queue = queues[q];
+      let repeatableJobs = await queue.getRepeatableJobs();
+      for (let job of repeatableJobs) {
+        try {
+          await queue.removeRepeatableByKey(job.key);
+        } catch (error) {
+          console.warn("Failed to remove job", error);
+        }
       }
-    );
-    await queue.add(SyncPlaysJob.jobName, new SyncPlaysJob(user.userid), {
-      jobId: `play:${user.userid}`,
-    });
-    await queue.add(
-      RefreshTokenJob.jobName,
-      new RefreshTokenJob(
-        user.userid,
-        user.refreshtoken,
-        client_id,
-        client_secret
-      ),
+    }
+    let users = await db.users.findMany();
+
+    let client_id = process.env.SPOTIFY_CLIENT_ID
+      ? process.env.SPOTIFY_CLIENT_ID
+      : "";
+    let client_secret = process.env.SPOTIFY_CLIENT_SECRET
+      ? process.env.SPOTIFY_CLIENT_SECRET
+      : "";
+
+    await queues[WeeklyReport.jobName].add(
+      "default",
+      {},
       {
-        jobId: `token:${user.userid}`,
         repeat: {
-          every: 1000 * 60 * 60, //60 min
+          cron: "0 0 * * Sun",
         },
       }
     );
-    await queue.add(SyncPlaysJob.jobName, new SyncPlaysJob(user.userid), {
-      jobId: `play:${user.userid}`,
-      repeat: {
-        every: 1000 * 60 * 5, //5 min
-      },
-    });
-  }
-  queue.process("cleaner", 1, worker.clearJobs.bind(worker));
-  await queue.add("cleaner");
-  await queue.add(
-    "cleaner",
-    {},
-    {
-      repeat: {
-        every: 6000000,
-      },
+    await queues[MonthlyReport.jobName].add(
+      "default",
+      {},
+      {
+        repeat: {
+          cron: "0 0 1 * *",
+        },
+      }
+    );
+
+    for (let user of users) {
+      await queues[RefreshTokenJob.jobName].add(
+        `refresh-${user.userid}-startup`,
+        new RefreshTokenJob(
+          user.userid,
+          user.refreshtoken,
+          client_id,
+          client_secret
+        ),
+        {}
+      );
+      await queues[SyncPlaysJob.jobName].add(
+        `sync-${user.userid}-startup`,
+        new SyncPlaysJob(user.userid),
+        {
+          jobId: `play:${user.userid}`,
+        }
+      );
+      await queues[RefreshTokenJob.jobName].add(
+        `refresh-${user.userid}`,
+        new RefreshTokenJob(
+          user.userid,
+          user.refreshtoken,
+          client_id,
+          client_secret
+        ),
+        {
+          repeat: {
+            every: 1000 * 60 * 60, //60 min
+          },
+        }
+      );
+      await queues[SyncPlaysJob.jobName].add(
+        `sync-${user.userid}`,
+        new SyncPlaysJob(user.userid),
+        {
+          jobId: `play:${user.userid}`,
+          repeat: {
+            every: 1000 * 60 * 5, //5 min
+          },
+        }
+      );
     }
-  );
+    await queues["cleaner"].add("cleaner-startup", {}, {});
+    await queues["cleaner"].add(
+      "cleaner-repeat",
+      {},
+      {
+        repeat: {
+          every: 6000000,
+        },
+      }
+    );
+    console.log("Added all jobs, next startup *won't* do that!");
+    await connection.set("jobs-initialized", new Date().toISOString());
+  }
+
   console.log("Ready to accept jobs");
 })()
   .then(() => {

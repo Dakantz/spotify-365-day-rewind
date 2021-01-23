@@ -1,23 +1,31 @@
 import { PrismaClient } from "@prisma/client";
 import { ExpressContext } from "apollo-server-express/src/ApolloServer";
-import Bull, { Queue } from "bull";
+import Bull, { Queue } from "bullmq";
 import { verify, sign } from "jsonwebtoken";
-import { SpotifyClient, SpotifyTokenClient } from "../shared";
-import { InitJob, RefreshTokenJob, SyncPlaysJob } from "../shared/types";
+import { buildQueueMap, queueMap, SpotifyClient, SpotifyTokenClient } from "../shared";
+import {
+  DeleteUserJob,
+  ExportMeJob,
+  InitJob,
+  MonthlyReport,
+  RefreshTokenJob,
+  SyncPlaysJob,
+  WeeklyReport,
+} from "../shared/types";
 import { GQLAuthentificationResponse, GQLUser } from "../shared/returnTypes";
+import IORedis from "ioredis";
 const db = new PrismaClient();
-const queue = new Bull("worker", {
-  redis: {
-    host:process.env.REDIS ? process.env.REDIS : "localhost",
-  }
+const connection = new IORedis({
+  host: process.env.REDIS ? process.env.REDIS : "localhost",
 });
+
 export class UserTokenData {
   constructor(public uid: number, public email: string, public name: string) {}
 }
 export class SContext {
   constructor(
     public db: PrismaClient,
-    public queue: Queue,
+    public queues: queueMap,
     public express: ExpressContext,
     public token: string,
     public user?: UserTokenData
@@ -38,7 +46,7 @@ export async function contextFunc(context: ExpressContext): Promise<SContext> {
     }
   }
 
-  return new SContext(db, queue, context, token, user);
+  return new SContext(db, buildQueueMap(connection), context, token, user);
 }
 export async function createUser(
   code: string,
@@ -92,28 +100,28 @@ export async function createUser(
       })
     ).userid;
 
-    await queue.add(
-      RefreshTokenJob.jobName,
+    await context.queues[RefreshTokenJob.jobName].add(
+      `refresh-${id}`,
       new RefreshTokenJob(id, respone.refresh_token, client_id, client_secret),
       {
-        jobId: `token:${id}`,
         repeat: {
-          every: 1000*60*60, //60 min
+          every: 1000 * 60 * 60, //60 min
         },
       }
     );
 
-    await queue.add(SyncPlaysJob.jobName, new SyncPlaysJob(id), {
-      jobId: `play:${id}`,
+    await context.queues[SyncPlaysJob.jobName].add(`sync-${id}`, new SyncPlaysJob(id), {
       repeat: {
-        every: 1000*60*5, //10 min
+        every: 1000 * 60 * 5, //10 min
       },
     });
   }
 
-  await queue.add(InitJob.jobName, new InitJob(id, respone.access_token), {
-    jobId: `init:${id}`,
-  });
+  await context.queues[InitJob.jobName].add(
+    `init-${id}`,
+    new InitJob(id, respone.access_token),
+    {}
+  );
 
   let jwt_data = new UserTokenData(id, me.email, me.display_name);
   return new GQLAuthentificationResponse(

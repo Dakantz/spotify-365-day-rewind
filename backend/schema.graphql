@@ -76,6 +76,7 @@ type User {
   status: Status!
   stats(from: String, to: String, steps: Int!, scale: Scale!): Stats!
   token: String!
+  reportIntervals: [Scale]!
 }
 union UserAndError = User | Error
 
@@ -92,6 +93,7 @@ union SimpleResponse = SimpleMessage | Error
 type UserMutations {
   delete: SimpleResponse!
   triggerExport: SimpleResponse!
+  setReportInterval(scale: Scale!, val: Boolean!): SimpleResponse!
 }
 
 type Mutation {

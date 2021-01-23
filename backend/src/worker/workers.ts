@@ -1,5 +1,5 @@
 import { PrismaClient, users } from "@prisma/client";
-import { Job, Queue } from "bull";
+import { Job, Queue, QueueScheduler, Worker } from "bullmq";
 import { fixSchemaAst } from "graphql-tools";
 import { SpotifyClient, SpotifyTokenClient } from "../shared";
 import { Emailer } from "../shared/emailer";
@@ -22,7 +22,11 @@ import { NumericLiteral } from "typescript";
 
 export class UserWorker {
   private mailer: Emailer;
-  constructor(public db: PrismaClient, private queue: Queue) {
+  public workers: Worker[];
+  public schedulers: QueueScheduler[];
+  constructor(public db: PrismaClient) {
+    this.workers = [];
+    this.schedulers = [];
     this.mailer = new Emailer(
       {
         host: process.env.SMTP_HOST,
@@ -45,10 +49,14 @@ export class UserWorker {
   }
   async clearJobs() {
     console.log("Deleting old jobs:");
-    let cleaned = await this.queue.clean(60000, "completed");
-    let cleaned_failed = await this.queue.clean(60000, "failed");
-    for (const job of [...cleaned, ...cleaned_failed]) {
-      console.log("deleted ", job);
+    for (let scheduler of this.schedulers) {
+      let queue = new Queue(scheduler.name, scheduler.opts);
+      let cleaned = await queue.clean(60000, -1, "completed");
+      let cleaned_failed = await queue.clean(60000, -1, "failed");
+      for (const job of [...cleaned, ...cleaned_failed]) {
+        console.log("deleted ", job);
+      }
+      console.log("Done with queue ", scheduler.name);
     }
     console.log("Deleted old jobs...");
   }
@@ -311,7 +319,9 @@ export class UserWorker {
         );
         console.log("Export finished!");
         console.log("Cleaning up:");
-        fs.rmdirSync(dir);
+        fs.rmdirSync(dir, {
+          recursive: true,
+        });
         console.log("Deleted temp dir", dir);
       } else {
         console.log("User to export not found...");
@@ -377,6 +387,7 @@ export class UserWorker {
           "report.html",
           data
         );
+        console.log("Report send to user:", user.uri, scale);
       }
     } catch (error) {
       console.error("Error processing report", error);

@@ -8,8 +8,19 @@
       <v-card class="ma-12">
         <v-card-title> Email Settings </v-card-title>
         <v-card-text>
-          <v-checkbox class="ma-4" :label="'Update me monthly'"> </v-checkbox>
-          <v-checkbox class="ma-4" :label="'Update me weekly'"> </v-checkbox>
+          <v-checkbox
+            v-for="scale in reportScales"
+            :key="scale"
+            class="ma-4"
+            :label="'Update me every ' + scale.toLowerCase()"
+            :input-value="isActive(scale)"
+            @change="
+              function a(val) {
+                updateReportInterval(scale, !!val);
+              }
+            "
+          >
+          </v-checkbox>
           Your emails will be delivered to
           <span color="lightgrey"> {{ me.email }}</span>
         </v-card-text>
@@ -99,6 +110,7 @@ export default {
       deleteLoading: false,
       deleteState: false,
       error: null,
+      reportScales: ["WEEK", "MONTH"],
     };
   },
   apollo: {
@@ -109,6 +121,7 @@ export default {
             ... on User {
               name
               email
+              reportIntervals
             }
           }
         }
@@ -120,6 +133,39 @@ export default {
   },
   methods: {
     ...mapActions(["logOut"]),
+    isActive(scale) {
+      console.log(this.me.reportIntervals, scale);
+      let val =
+        this.me.reportIntervals.findIndex((s) => s.includes(scale)) != -1;
+      console.log(val);
+      return val;
+    },
+    async updateReportInterval(scale, val) {
+      console.log("Clicked", scale, val);
+      let userData = await this.$apollo.mutate({
+        // Query
+        mutation: gql`
+          mutation interval($scale: Scale!, $val: Boolean!) {
+            me {
+              setReportInterval(scale: $scale, val: $val) {
+                ... on SimpleMessage {
+                  message
+                }
+                ... on Error {
+                  message
+                }
+              }
+            }
+          }
+        `,
+        variables: {
+          scale,
+          val,
+        },
+        fetchPolicy: "no-cache",
+      });
+      console.log(userData.data);
+    },
     async exportMe() {
       try {
         this.exportDialog = true;
