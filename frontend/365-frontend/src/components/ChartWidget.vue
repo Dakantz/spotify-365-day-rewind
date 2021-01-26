@@ -1,8 +1,9 @@
 <template>
-  <v-card >
+  <v-card>
     <v-card-title> </v-card-title>
     <v-card-text>
-      <bar-chart :options="chartOptions" :chartData="chartData" :height="250"> </bar-chart>
+      <line-chart :options="chartOptions" :chartData="chartData" :height="250">
+      </line-chart>
     </v-card-text>
     <v-card-actions>
       <statistics-selector
@@ -21,13 +22,13 @@
 </template>
 
 <script>
-import BarChart from "./BarChart.vue";
+import LineChart from "./LineChart.vue";
 import StatisticsSelector from "./StatisticsSelector.vue";
 import TimeFrameSelector from "./TimeFrameSelector.vue";
 
 import gql from "graphql-tag";
 export default {
-  components: { BarChart, StatisticsSelector, TimeFrameSelector },
+  components: { LineChart, StatisticsSelector, TimeFrameSelector },
   props: {
     id: String,
   },
@@ -77,10 +78,9 @@ export default {
         : [];
       console.log(data);
       return {
-        labels: this.steps ? this.steps.map((step) => step.time) : [],
+        labels: this.steps ? this.steps.map((step) => new Date(step.time)) : [],
         datasets: [
           {
-            backgroundColor: "green",
             borderColor: "darkgreen",
             label: this.statistics,
             data,
@@ -88,15 +88,14 @@ export default {
         ],
       };
     },
-  },
-  data: () => {
-    return {
-      timeframe: null,
-      statistics: null,
-      chartOptions: {
+    chartOptions() {
+      let unit = this.timeframe
+        ? this.timeframe.subScale.toLowerCase()
+        : undefined;
+      console.log(unit);
+      return {
         responsive: true,
-        canvas: {
-        },
+        canvas: {},
         scales: {
           yAxes: [
             {
@@ -105,11 +104,35 @@ export default {
               },
             },
           ],
+          xAxes: [
+            {
+              type: "time",
+              time: {
+                displayFormats: {
+                  millisecond: "HH:mm:ss.SSS ",
+                  second: "HH:mm:ss",
+                  minute: "HH:mm",
+                  hour: "ddd HH:mm",
+                },
+                unit,
+              },
+              ticks: {
+                source: "data",
+              },
+              bounds: "ticks",
+            },
+          ],
         },
         canvas: {
           aspectRatio: 2,
         },
-      },
+      };
+    },
+  },
+  data: () => {
+    return {
+      timeframe: null,
+      statistics: null,
     };
   },
 };

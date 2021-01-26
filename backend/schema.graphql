@@ -45,7 +45,7 @@ type StatPoint {
   plays: Int
   artists: [ArtistInfo]!
   songs: [SongInfo]!
-  time: Int!
+  time: String!
 }
 
 enum Scale {

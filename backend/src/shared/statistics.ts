@@ -56,21 +56,35 @@ export class Stats {
       scale,
       fromFixed.toISOString(),
       toFixed.toISOString(),
+      scale,
       wantedSteps,
       userId
     );
   }
   public async steps(parent: GQLStats) {
     let query = `
-    SELECT count(*) as plays, sum(s.duration_ms) / (1000 * 60) as playtime, extract(${
-      parent.scale
-    } FROM plays.time) as timemeaser
-    FROM plays
-             LEFT JOIN songs s on s.songid = plays.songid
-    WHERE ${parent.userId ? "userid = " + parent.userId + " AND" : ""}
-     plays.time BETWEEN '${parent.from}' AND '${parent.to}'
-    GROUP BY timemeaser 
-    ORDER BY timemeaser ASC
+        SELECT CASE
+           WHEN p.userid IS NULL THEN 0
+           WHEN p.userid IS NOT NULL THEN count(*) END
+                                        as plays,
+       sum(s.duration_ms) / (1000 * 60) as playtime,
+       timesub.generate_series                                   as time_from,
+       timesub.generate_series +  INTERVAL '1 ${parent.scale.toLowerCase()}' as time_to
+       
+       FROM (SELECT *
+      FROM generate_series(DATE_TRUNC('${parent.scale.toLowerCase()}', TIMESTAMP '${
+      parent.from
+    }'),
+      DATE_TRUNC('${parent.scale.toLowerCase()}', TIMESTAMP '${
+      parent.to
+    }'), INTERVAL '1 ${parent.scale.toLowerCase()}' )) as timesub
+         LEFT JOIN plays p on p.time BETWEEN timesub.generate_series AND timesub.generate_series + INTERVAL '1 ${parent.scale.toLowerCase()}'
+         LEFT JOIN songs s on s.songid = p.songid
+
+WHERE ${parent.userId ? "userid = " + parent.userId + " OR " : ""}
+   p.userid IS NULL
+GROUP BY timesub.generate_series, p.userid
+ORDER BY timesub.generate_series DESC
         `;
     let data = await this.db.$queryRaw(query);
 
@@ -78,11 +92,11 @@ export class Stats {
     for (let point of data) {
       steps.push(
         new GQLStatPoint(
-          point.playtime,
-          point.plays,
-          point.timemeaser,
-          undefined,
-          undefined,
+          point.playtime ? point.playtime : 0,
+          point.plays ? point.plays : 0,
+          point.time_from,
+          point.time_from,
+          point.time_to,
           parent.userId
         )
       );
@@ -110,7 +124,7 @@ WHERE ${parent.userId ? "userid = " + parent.userId + " AND" : ""}
         parent.userId
       );
     } else {
-      return new GQLStatPoint(0, 0, -1, undefined, undefined, parent.userId);
+      return new GQLStatPoint(0, 0, "", undefined, undefined, parent.userId);
     }
   }
   public async mostPlayedArtists(

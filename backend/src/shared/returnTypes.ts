@@ -38,7 +38,7 @@ export class GQLStatPoint {
   constructor(
     public minutes: number,
     public plays: number,
-    public time: number,
+    public time: string,
     public from?: string,
     public to?: string,
     public userId?: number
@@ -53,6 +53,7 @@ export class GQLStats {
     public scale: string,
     public from: string,
     public to: string,
+    public scaletype:ScaleSteps,
     public wantedSteps: number,
     public userId?: number
   ) {}

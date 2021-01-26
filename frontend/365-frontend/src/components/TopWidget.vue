@@ -71,7 +71,7 @@ export default {
     topStats: {
       query() {
         return gql`
-        query topStats($from: String, $to: String) {
+        query topStats($from: String, $to: String, $take:Int) {
           me {
             ... on User {
               name
@@ -79,7 +79,7 @@ export default {
               ${
                 this.mode.type == "songs"
                   ? `
-              mostPlayedSongs(from: $from, to: $to){
+              mostPlayedSongs(from: $from, to: $to, take:$take){
                 plays
                 minutes
                 song {
@@ -90,7 +90,7 @@ export default {
                 }
               }`
                   : `
-              mostPlayedArtists(from: $from, to: $to) {
+              mostPlayedArtists(from: $from, to: $to, take:$take) {
                 plays
                 plays
                 minutes
@@ -114,6 +114,7 @@ export default {
         return {
           from: from_maybe ? from_maybe : new Date().toISOString(),
           to: new Date().toISOString(),
+          take: 10,
         };
       },
       skip() {
