@@ -1,8 +1,22 @@
 <template>
   <v-card>
     <v-card-title
-      >Your top &ensp; &nbsp;<span v-if="mode">&nbsp;{{ mode.type }}</span
+      >Your top <span v-if="mode" class="ml-2">{{ mode.type }}</span
       ><span v-else>...</span>
+      <v-spacer></v-spacer>
+
+      <artist-or-song-selector
+        v-model="mode"
+        :id="`top:${id}`"
+        :name="`Time`"
+        :hint="`Artists or Songs`"
+      />
+      <time-frame-selector
+        v-model="timeframe"
+        :id="`top:${id}`"
+        :name="`Time`"
+        :hint="`Timeframe`"
+      />
     </v-card-title>
 
     <v-card-text>
@@ -29,18 +43,6 @@
       </v-list>
     </v-card-text>
     <v-card-actions>
-      <artist-or-song-selector
-        v-model="mode"
-        :id="`top:${id}`"
-        :name="`Time`"
-        :hint="`Artists or Songs`"
-      />
-      <time-frame-selector
-        v-model="timeframe"
-        :id="`top:${id}`"
-        :name="`Time`"
-        :hint="`Timeframe`"
-      />
     </v-card-actions>
   </v-card>
 </template>
