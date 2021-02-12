@@ -77,7 +77,7 @@ export class Stats {
       parent.to
     }'), INTERVAL '1 ${parent.scale.toLowerCase()}' )) as timesub
 
-    LEFT OUTER JOIN plays p on p.time BETWEEN timesub.generate_series AND timesub.generate_series + INTERVAL '1 hour' ${parent.userId ? " AND p.userid = " + parent.userId : ""}
+    LEFT OUTER JOIN plays p on p.time BETWEEN timesub.generate_series AND timesub.generate_series + INTERVAL '1 ${parent.scale.toLowerCase()}' ${parent.userId ? " AND p.userid = " + parent.userId : ""}
     LEFT OUTER JOIN songs s on s.songid = p.songid
 GROUP BY timesub.generate_series
 ORDER BY timesub.generate_series DESC
