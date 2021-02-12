@@ -4,17 +4,20 @@
       <v-toolbar-title class="headline text-uppercase">365 days of rewind</v-toolbar-title>
 
        <v-btn class="ml-2 mr-2" text to="/" >
-        <span class="mr-2">Info</span>
+        <span >Info</span>
       </v-btn>
       <v-btn v-if="loggedIn" text to="/stats" class="mr-2">
-        <span class="mr-2">Stats</span>
+        <span >Stats</span>
+      </v-btn>
+      <v-btn v-if="loggedIn" text to="/global-stats" class="mr-2">
+        <span >Global Stats</span>
       </v-btn>
       <v-btn v-if="loggedIn" text to="/settings" class="mr-2">
-        <span class="mr-2">Settings</span>
+        <span >Settings</span>
       </v-btn>
 
        <v-btn text to="/about" class="mr-2">
-        <span class="mr-2">About</span>
+        <span >About</span>
       </v-btn>
       <v-spacer></v-spacer>
       <div v-if="loggedIn">Logged in as {{ userInfo.name }}</div>

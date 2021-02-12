@@ -17,6 +17,7 @@ import IORedis from "ioredis";
 const db = new PrismaClient();
 const connection = new IORedis({
   host: process.env.REDIS ? process.env.REDIS : "localhost",
+  port:process.env.REDIS_PORT ? parseInt(process.env.REDIS_PORT) : 6379,
 });
 
 export class UserTokenData {

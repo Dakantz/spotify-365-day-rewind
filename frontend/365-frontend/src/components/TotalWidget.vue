@@ -40,6 +40,10 @@ import gql from "graphql-tag";
 export default {
   props: {
     id: String,
+    global: {
+      type: Boolean,
+      default: false,
+    },
   },
   components: {
     StatisticsSelector,
@@ -53,12 +57,12 @@ export default {
   apollo: {
     totalStats: {
       query: gql`
-        query totalTime($from: String, $to: String) {
+        query totalTime($from: String, $to: String, $global:Boolean) {
           me {
             ... on User {
               name
               email
-              stats(scale: HOUR, steps: 1, from: $from, to: $to) {
+              stats(scale: HOUR, steps: 1, from: $from, to: $to, global: $global) {
                 total {
                   plays
                   minutes

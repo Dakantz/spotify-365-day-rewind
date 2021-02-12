@@ -66,15 +66,28 @@ type Stats {
 type User {
   name: String!
   email: String!
-  mostPlayedSongs(take: Int, skip: Int, from: String, to: String): [SongInfo]!
+  mostPlayedSongs(
+    take: Int
+    skip: Int
+    from: String
+    to: String
+    global: Boolean
+  ): [SongInfo]!
   mostPlayedArtists(
     take: Int
     skip: Int
     from: String
     to: String
+    global: Boolean
   ): [ArtistInfo]!
   status: Status!
-  stats(from: String, to: String, steps: Int!, scale: Scale!): Stats!
+  stats(
+    from: String
+    to: String
+    steps: Int!
+    scale: Scale!
+    global: Boolean
+  ): Stats!
   token: String!
   reportIntervals: [Scale]!
 }

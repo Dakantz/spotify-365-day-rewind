@@ -3,6 +3,7 @@ import VueRouter from 'vue-router'
 import Home from '../views/Home.vue'
 import Callback from '../views/Callback.vue'
 import Stats from '../views/Stats.vue'
+import GlobalStats from '../views/GlobalStats.vue'
 import Settings from '../views/Settings.vue'
 
 
@@ -23,6 +24,11 @@ const routes = [
     path: '/stats',
     name: 'Stats',
     component: Stats
+  },
+  {
+    path: '/global-stats',
+    name: 'GlobalStats',
+    component: GlobalStats
   },
   {
     path: '/settings',

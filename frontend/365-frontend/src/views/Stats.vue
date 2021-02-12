@@ -1,5 +1,6 @@
 <template>
   <div class="stats">
+    <div class="text-h3 ma-12">Statistics for {{ me.name }}</div>
     <v-container>
       <v-row>
         <v-col>
@@ -22,17 +23,36 @@
 import ChartWidget from "../components/ChartWidget.vue";
 import TopWidget from "../components/TopWidget.vue";
 import TotalWidget from "../components/TotalWidget.vue";
+import gql from "graphql-tag";
 export default {
   components: {
     TotalWidget,
     ChartWidget,
     TopWidget,
   },
+  apollo: {
+    me: {
+      query: gql`
+        query me {
+          me {
+            ... on User {
+              name
+              email
+              reportIntervals
+            }
+          }
+        }
+      `,
+      update(data) {
+        return data.me;
+      },
+    },
+  },
 };
 </script>
 
 <style>
 .widget {
-  margin: 10px;
+  margin: 5px;
 }
 </style>

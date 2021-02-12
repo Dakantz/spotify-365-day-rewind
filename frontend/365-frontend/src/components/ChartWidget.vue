@@ -31,17 +31,21 @@ export default {
   components: { LineChart, StatisticsSelector, TimeFrameSelector },
   props: {
     id: String,
+    global:{
+      type:Boolean,
+      default:false
+    }
   },
 
   apollo: {
     steps: {
       query: gql`
-        query steps($from: String, $to: String, $scale: Scale!, $steps: Int!) {
+        query steps($from: String, $to: String, $scale: Scale!, $steps: Int!, $global:Boolean) {
           me {
             ... on User {
               name
               email
-              stats(scale: $scale, steps: $steps, from: $from, to: $to) {
+              stats(scale: $scale, steps: $steps, from: $from, to: $to, global: $global) {
                 steps {
                   plays
                   minutes

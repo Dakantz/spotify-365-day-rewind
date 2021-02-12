@@ -63,12 +63,10 @@ export class Stats {
   }
   public async steps(parent: GQLStats) {
     let query = `
-        SELECT CASE
-           WHEN p.userid IS NULL THEN 0
-           WHEN p.userid IS NOT NULL THEN count(*) END
-                                        as plays,
+    SELECT 
+		count(p.playid) as plays,
        sum(s.duration_ms) / (1000 * 60) as playtime,
-       timesub.generate_series                                   as time_from,
+       timesub.generate_series as time_from,
        timesub.generate_series +  INTERVAL '1 ${parent.scale.toLowerCase()}' as time_to
        
        FROM (SELECT *
@@ -78,12 +76,10 @@ export class Stats {
       DATE_TRUNC('${parent.scale.toLowerCase()}', TIMESTAMP '${
       parent.to
     }'), INTERVAL '1 ${parent.scale.toLowerCase()}' )) as timesub
-         LEFT JOIN plays p on p.time BETWEEN timesub.generate_series AND timesub.generate_series + INTERVAL '1 ${parent.scale.toLowerCase()}'
-         LEFT JOIN songs s on s.songid = p.songid
 
-WHERE ${parent.userId ? "userid = " + parent.userId + " OR " : ""}
-   p.userid IS NULL
-GROUP BY timesub.generate_series, p.userid
+    LEFT OUTER JOIN plays p on p.time BETWEEN timesub.generate_series AND timesub.generate_series + INTERVAL '1 hour' ${parent.userId ? " AND p.userid = " + parent.userId : ""}
+    LEFT OUTER JOIN songs s on s.songid = p.songid
+GROUP BY timesub.generate_series
 ORDER BY timesub.generate_series DESC
         `;
     let data = await this.db.$queryRaw(query);

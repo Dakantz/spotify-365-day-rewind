@@ -37,7 +37,7 @@ export const resolvers = {
         args.take,
         args.skip,
         args.from ? new Date(args.from) : undefined,
-        context.user?.uid
+        args.global ? undefined : context.user?.uid
       );
     },
 
@@ -53,7 +53,7 @@ export const resolvers = {
         args.take,
         args.skip,
         args.from ? new Date(args.from) : undefined,
-        context.user?.uid
+        args.global ? undefined : context.user?.uid
       );
     },
     stats: async (
@@ -65,7 +65,7 @@ export const resolvers = {
       return await stats.stats(
         args.scale,
         args.steps,
-        context.user?.uid,
+        args.global ? undefined : context.user?.uid,
         args.from ? new Date(args.from) : undefined,
         args.to ? new Date(args.to) : undefined
       );

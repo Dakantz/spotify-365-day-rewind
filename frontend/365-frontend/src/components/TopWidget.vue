@@ -56,6 +56,10 @@ export default {
   components: { TimeFrameSelector, ArtistOrSongSelector },
   props: {
     id: String,
+    global:{
+      type:Boolean,
+      default:false
+    }
   },
   data: () => {
     return {
@@ -73,7 +77,7 @@ export default {
     topStats: {
       query() {
         return gql`
-        query topStats($from: String, $to: String, $take:Int) {
+        query topStats($from: String, $to: String, $take:Int, $global:Boolean) {
           me {
             ... on User {
               name
@@ -81,7 +85,7 @@ export default {
               ${
                 this.mode.type == "songs"
                   ? `
-              mostPlayedSongs(from: $from, to: $to, take:$take){
+              mostPlayedSongs(from: $from, to: $to, take:$take, global: $global){
                 plays
                 minutes
                 song {
@@ -92,7 +96,7 @@ export default {
                 }
               }`
                   : `
-              mostPlayedArtists(from: $from, to: $to, take:$take) {
+              mostPlayedArtists(from: $from, to: $to, take:$take, global: $global) {
                 plays
                 plays
                 minutes

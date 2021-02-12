@@ -15,6 +15,8 @@ import { UserWorker } from "./workers";
 (async () => {
   const connection = new IORedis({
     host: process.env.REDIS ? process.env.REDIS : "localhost",
+    port:process.env.REDIS_PORT ? parseInt(process.env.REDIS_PORT) : 6379,
+
   });
   connection.setMaxListeners(30);
   const db = new PrismaClient();
