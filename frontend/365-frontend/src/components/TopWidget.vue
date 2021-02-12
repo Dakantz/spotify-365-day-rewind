@@ -1,7 +1,8 @@
 <template>
   <v-card>
     <v-card-title
-      >Your top <span v-if="mode" class="ml-2">{{ mode.type }}</span
+      ><span v-if="global" class="mr-2">Our</span
+      ><span v-else class="mr-2">Your</span> top <span v-if="mode" class="ml-2">{{ mode.type }}</span
       ><span v-else>...</span>
       <v-spacer></v-spacer>
 
