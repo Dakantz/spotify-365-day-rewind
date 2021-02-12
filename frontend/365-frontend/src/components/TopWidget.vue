@@ -121,6 +121,7 @@ export default {
           from: from_maybe ? from_maybe : new Date().toISOString(),
           to: new Date().toISOString(),
           take: 10,
+          global: this.global,
         };
       },
       skip() {

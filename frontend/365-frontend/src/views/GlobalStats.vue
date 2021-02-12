@@ -5,15 +5,15 @@
     <v-container>
       <v-row>
         <v-col>
-          <total-widget class="widget" :id="`total-1`" :global="true" />
+          <total-widget class="widget" :id="`glob-total-1`" :global="true" />
         </v-col>
         <v-col>
-          <chart-widget class="widget" :id="`chart-1`" :global="true" />
+          <chart-widget class="widget" :id="`glob-chart-1`" :global="true" />
         </v-col>
       </v-row>
       <v-row>
         <v-col>
-          <top-widget class="widget" :id="`top-1`" :global="true" />
+          <top-widget class="widget" :id="`glob-top-1`" :global="true" />
         </v-col>
       </v-row>
     </v-container>

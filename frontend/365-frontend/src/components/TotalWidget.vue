@@ -57,12 +57,18 @@ export default {
   apollo: {
     totalStats: {
       query: gql`
-        query totalTime($from: String, $to: String, $global:Boolean) {
+        query totalTime($from: String, $to: String, $global: Boolean) {
           me {
             ... on User {
               name
               email
-              stats(scale: HOUR, steps: 1, from: $from, to: $to, global: $global) {
+              stats(
+                scale: HOUR
+                steps: 1
+                from: $from
+                to: $to
+                global: $global
+              ) {
                 total {
                   plays
                   minutes
@@ -80,6 +86,7 @@ export default {
         return {
           from: from_maybe ? from_maybe : new Date().toISOString(),
           to: new Date().toISOString(),
+          global: this.global,
         };
       },
       skip() {

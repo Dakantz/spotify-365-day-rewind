@@ -65,6 +65,7 @@ export default {
           to: new Date().toISOString(),
           steps: -1,
           scale: this.timeframe.subScale,
+          global: this.global,
         };
       },
       skip() {
