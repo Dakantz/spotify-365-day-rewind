@@ -52,6 +52,6 @@ export class Emailer {
       html: rendered,
       subject,
     };
-    this.transport.sendMail(message);
+    await this.transport.sendMail(message);
   }
 }
