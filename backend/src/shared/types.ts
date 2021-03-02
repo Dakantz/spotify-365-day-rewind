@@ -33,3 +33,8 @@ export class MonthlyReport {
   public static jobName = "report-monthly";
   constructor() {}
 }
+
+export class PlaylistRefresh {
+  public static jobName = "playlist-refresh";
+  constructor(public userId: number, public playlistId: number) {}
+}

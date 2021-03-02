@@ -1,4 +1,4 @@
-import axios from "axios";
+import axios, { Method } from "axios";
 import querystring from "querystring";
 export class SpotifyClient {
   public baseUrl: string = "https://api.spotify.com/v1";
@@ -6,10 +6,16 @@ export class SpotifyClient {
   constructor(public token: string) {
     this.headers["Authorization"] = "Bearer " + token;
   }
-  private async requestData(url: string, query: any = {}) {
+  private async requestData(
+    url: string,
+    query: any = {},
+    method: Method = "GET"
+  ) {
     while (true) {
       try {
-        return await axios.get(this.baseUrl + url, {
+        return await axios.request({
+          url: this.baseUrl + url,
+          method,
           params: query,
           headers: this.headers,
         });
@@ -19,6 +25,7 @@ export class SpotifyClient {
             setTimeout(() => resolve(null), error.headers["Retry-After"] * 1000)
           );
         } else {
+          console.error("Error while requesting data from spotify", error);
           throw error;
         }
       }
@@ -45,8 +52,24 @@ export class SpotifyClient {
     return (await this.requestData("/artists", { ids: this.toCSL(ids) })).data
       .artists;
   }
+  public async features(ids: string[]) {
+    return (await this.requestData("/audio-features", { ids: this.toCSL(ids) }))
+      .data.audio_features;
+  }
   public async album(id: string) {
     return (await this.requestData("/albums/" + id)).data;
+  }
+  public async user(id: string) {
+    return (await this.requestData("/users/" + id)).data;
+  }
+  public async recommendations(artist_ids: string[], song_ids: string[]) {
+    return (
+      await this.requestData("/recommendations", {
+        seed_artists: this.toCSL(artist_ids),
+        seed_tracks: this.toCSL(song_ids),
+        seed_genres: ",",
+      })
+    ).data;
   }
   public async recentListened(query?: any) {
     return (

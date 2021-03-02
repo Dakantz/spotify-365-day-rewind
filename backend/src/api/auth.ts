@@ -2,7 +2,12 @@ import { PrismaClient } from "@prisma/client";
 import { ExpressContext } from "apollo-server-express/src/ApolloServer";
 import Bull, { Queue } from "bullmq";
 import { verify, sign } from "jsonwebtoken";
-import { buildQueueMap, queueMap, SpotifyClient, SpotifyTokenClient } from "../shared";
+import {
+  buildQueueMap,
+  queueMap,
+  SpotifyClient,
+  SpotifyTokenClient,
+} from "../shared";
 import {
   DeleteUserJob,
   ExportMeJob,
@@ -12,12 +17,12 @@ import {
   SyncPlaysJob,
   WeeklyReport,
 } from "../shared/types";
-import { GQLAuthentificationResponse, GQLUser } from "../shared/returnTypes";
+import { GQLAuthentificationResponse, GQLMeUser } from "../shared/returnTypes";
 import IORedis from "ioredis";
 const db = new PrismaClient();
 const connection = new IORedis({
   host: process.env.REDIS ? process.env.REDIS : "localhost",
-  port:process.env.REDIS_PORT ? parseInt(process.env.REDIS_PORT) : 6379,
+  port: process.env.REDIS_PORT ? parseInt(process.env.REDIS_PORT) : 6379,
 });
 
 export class UserTokenData {
@@ -29,13 +34,15 @@ export class SContext {
     public queues: queueMap,
     public express: ExpressContext,
     public token: string,
-    public user?: UserTokenData
+    public user?: UserTokenData,
+    public spotifyToken?: string
   ) {}
 }
 export async function contextFunc(context: ExpressContext): Promise<SContext> {
   let auth_header = context.req.headers.authorization;
   let token = "";
   let user: UserTokenData | undefined = undefined;
+  let spotifyToken: string | undefined = undefined;
   if (auth_header) {
     let parts = auth_header.split(" ");
     if (parts.length > 1 && parts[0] == "Bearer") {
@@ -44,10 +51,19 @@ export async function contextFunc(context: ExpressContext): Promise<SContext> {
         complete: true,
       }) as { [key: string]: { [key2: string]: string } };
       user = (decoded.payload as unknown) as UserTokenData;
+      spotifyToken = (await db.users.findFirst({ where: { userid: user.uid } }))
+        ?.token;
     }
   }
 
-  return new SContext(db, buildQueueMap(connection), context, token, user);
+  return new SContext(
+    db,
+    buildQueueMap(connection),
+    context,
+    token,
+    user,
+    spotifyToken
+  );
 }
 export async function createUser(
   code: string,
@@ -111,11 +127,15 @@ export async function createUser(
       }
     );
 
-    await context.queues[SyncPlaysJob.jobName].add(`sync-${id}`, new SyncPlaysJob(id), {
-      repeat: {
-        every: 1000 * 60 * 5, //10 min
-      },
-    });
+    await context.queues[SyncPlaysJob.jobName].add(
+      `sync-${id}`,
+      new SyncPlaysJob(id),
+      {
+        repeat: {
+          every: 1000 * 60 * 5, //10 min
+        },
+      }
+    );
   }
 
   await context.queues[InitJob.jobName].add(
@@ -127,6 +147,11 @@ export async function createUser(
   let jwt_data = new UserTokenData(id, me.email, me.display_name);
   return new GQLAuthentificationResponse(
     sign(JSON.stringify(jwt_data), process.env.JWT_SECRET as string),
-    new GQLUser(data.name, data.email, respone.access_token)
+    new GQLMeUser(
+      me.id,
+      data.name,
+      data.email,
+      respone.access_token
+    )
   );
 }

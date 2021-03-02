@@ -3,6 +3,8 @@ import { SpotifyClient } from ".";
 import {
   GQLArtist,
   GQLArtistStats,
+  GQLLeaderboardEntry,
+  GQLPublicUser,
   GQLSongStats,
   GQLSSong,
   GQLStatPoint,
@@ -77,7 +79,9 @@ export class Stats {
       parent.to
     }'), INTERVAL '1 ${parent.scale.toLowerCase()}' )) as timesub
 
-    LEFT OUTER JOIN plays p on p.time BETWEEN timesub.generate_series AND timesub.generate_series + INTERVAL '1 ${parent.scale.toLowerCase()}' ${parent.userId ? " AND p.userid = " + parent.userId : ""}
+    LEFT OUTER JOIN plays p on p.time BETWEEN timesub.generate_series AND timesub.generate_series + INTERVAL '1 ${parent.scale.toLowerCase()}' ${
+      parent.userId ? " AND p.userid = " + parent.userId : ""
+    }
     LEFT OUTER JOIN songs s on s.songid = p.songid
 GROUP BY timesub.generate_series
 ORDER BY timesub.generate_series DESC
@@ -130,7 +134,7 @@ WHERE ${parent.userId ? "userid = " + parent.userId + " AND" : ""}
     skip: number = 0,
     from?: Date,
     userId?: number
-  ): Promise<GQLArtist[]> {
+  ): Promise<GQLArtistStats[]> {
     if (take > 50) {
       take = 50;
     }
@@ -152,7 +156,7 @@ OFFSET ${skip}`);
     );
     return artists.map((artist: any, index: number) => {
       return new GQLArtistStats(
-        new GQLArtist(artist.name, artist.images),
+        new GQLArtist(artist.id, artist.name, artist.images),
         data[index].playtime,
         data[index].plays
       );
@@ -166,7 +170,7 @@ OFFSET ${skip}`);
     skip: number = 0,
     from?: Date,
     userId?: number
-  ): Promise<GQLSSong[]> {
+  ): Promise<GQLSongStats[]> {
     if (take > 50) {
       take = 50;
     }
@@ -184,13 +188,50 @@ ORDER BY plays DESC
 LIMIT ${take}
 OFFSET ${skip}`;
     let data = await this.db.$queryRaw(query);
-    let songs = await spotify.tracks(data.map((p: any) => p.uri.split(":")[2]));
+    let songs =
+      data.length > 0
+        ? await spotify.tracks(data.map((p: any) => p.uri.split(":")[2]))
+        : [];
     return songs.map((song: any, index: number) => {
       return new GQLSongStats(
-        new GQLSSong(song.name, song.album.images),
+        new GQLSSong(song.id, song.name, song.album.images),
         data[index].playtime,
         data[index].plays
       );
     });
+  }
+  public async leaderboard(
+    to: Date,
+    from: Date,
+    token: string,
+    take?: number,
+    skip?: number
+  ): Promise<GQLLeaderboardEntry[]> {
+    let leaders = await this.db.$queryRaw`
+    SELECT u.userid as id,
+		count(p.playid) as plays,
+       sum(s.duration_ms) / (1000 * 60) as playtime
+      FROM users u
+    LEFT OUTER JOIN plays p on p.userid = u.userid 
+    LEFT OUTER JOIN songs s on s.songid = p.songid
+	WHERE  p."time" BETWEEN '${from.toISOString()}' AND '${to.toISOString()}'
+	AND u.allow_public_display IS TRUE
+GROUP BY u.userid
+ORDER BY playtime DESC
+LIMIT ${take}
+OFFSET ${skip}
+    `;
+    let users = await this.db.users.findMany({
+      where: { userid: { in: leaders.map((leader: any) => leader.id) } },
+    });
+
+    let entries: GQLLeaderboardEntry[] = users.map((user, i) => {
+      return new GQLLeaderboardEntry(
+        new GQLPublicUser(user.uri.split(":")[1], user.name, token),
+        leaders[i].playtime,
+        leaders[i].plays
+      );
+    });
+    return leaders;
   }
 }

@@ -1,3 +1,31 @@
+enum RefreshIntervals {
+  DAILY
+  WEEKLY
+  MONTHLY
+  NEVER
+}
+enum PlaylistFilter {
+  TOP
+  TOP_UPBEAT
+  TOP_CHILL
+}
+enum PlaylListMode {
+  TOP
+  COLLABORATIVE
+  RECOMMENDATIONS
+}
+
+enum Scale {
+  DOW
+  HOUR
+  DAY
+  WEEK
+  MONTH
+}
+enum PlaylistSource {
+  PERSONAL
+  GLOBAL
+}
 type Error {
   message: String!
 }
@@ -7,15 +35,17 @@ type Image {
   width: Int!
 }
 type Artist {
+  id: String!
   name: String!
   cover: [Image]!
   songs: [Song]!
 }
 
 type Song {
+  id: String!
   name: String!
   cover: [Image]!
-  artist: [Artist]!
+  artists: [Artist]!
 }
 
 type SongInfo {
@@ -48,13 +78,6 @@ type StatPoint {
   time: String!
 }
 
-enum Scale {
-  DOW
-  HOUR
-  DAY
-  WEEK
-  MONTH
-}
 type Stats {
   from: String!
   to: String!
@@ -63,7 +86,47 @@ type Stats {
   steps: [StatPoint]!
   total: StatPoint!
 }
-type User {
+interface GeneralUser {
+  id: String!
+  image_url: String
+  name: String!
+  mostPlayedSongs(
+    take: Int
+    skip: Int
+    from: String
+    to: String
+    global: Boolean
+  ): [SongInfo]!
+  mostPlayedArtists(
+    take: Int
+    skip: Int
+    from: String
+    to: String
+    global: Boolean
+  ): [ArtistInfo]!
+}
+type PublicUser implements GeneralUser {
+  id: String!
+  image_url: String
+  name: String!
+  mostPlayedSongs(
+    take: Int
+    skip: Int
+    from: String
+    to: String
+    global: Boolean
+  ): [SongInfo]!
+  mostPlayedArtists(
+    take: Int
+    skip: Int
+    from: String
+    to: String
+    global: Boolean
+  ): [ArtistInfo]!
+}
+type MeUser implements GeneralUser {
+  id: String!
+  image_url: String
   name: String!
   email: String!
   mostPlayedSongs(
@@ -80,7 +143,6 @@ type User {
     to: String
     global: Boolean
   ): [ArtistInfo]!
-  status: Status!
   stats(
     from: String
     to: String
@@ -88,36 +150,78 @@ type User {
     scale: Scale!
     global: Boolean
   ): Stats!
-  token: String!
+  status: Status!
   reportIntervals: [Scale]!
+  token: String!
+
+  previewPlaylist(
+    params: CreatePlaylist!
+  ): [Song]!
 }
-union UserAndError = User | Error
 
 type AuthentificationResponse {
   token: String!
-  user: User!
+  user: MeUser!
 }
 type SimpleMessage {
   message: String!
 }
-union AuthentificationResponseAndError = AuthentificationResponse | Error
+type PublicUserList {
+  users: [PublicUser]!
+}
+type LeaderboardEntry {
+  user: PublicUser!
+  minutes: Float!
+  plays: Int!
+}
+type LeaderboardEntries {
+  entries: [LeaderboardEntry]!
+}
+union UserOrError = MeUser | Error
+union AuthentificationResponseOrError = AuthentificationResponse | Error
 union SimpleResponse = SimpleMessage | Error
 
+union PublicUsersOrError = PublicUserList | Error
+union LeaderboardEntriesOrError = LeaderboardEntries | Error
+
+type PlaylistCreationResponse {
+  success: Boolean!
+  message: String!
+  id: String
+  songs: [Song]
+}
+input CreatePlaylist {
+  mode: PlaylListMode = TOP
+  filtering: PlaylistFilter = TOP
+  refreshEvery: RefreshIntervals = WEEK
+  timespan_ms: Int!
+  name: String!
+  source: PlaylistSource = PERSONAL
+  with: [String]
+}
 type UserMutations {
   delete: SimpleResponse!
   triggerExport: SimpleResponse!
   setReportInterval(scale: Scale!, val: Boolean!): SimpleResponse!
+
+  createPlaylist(params: CreatePlaylist!): PlaylistCreationResponse!
 }
 
 type Mutation {
   registerOrLogin(
     code: String!
     redirectUrl: String!
-  ): AuthentificationResponseAndError!
+  ): AuthentificationResponseOrError!
   me: UserMutations!
 }
-
 type Query {
   clientToken: String!
-  me: UserAndError!
+  me: UserOrError!
+  findUser(query: String!): PublicUsersOrError
+  leaderboard(
+    from: String!
+    to: String
+    take: Int
+    skip: Int
+  ): LeaderboardEntriesOrError
 }

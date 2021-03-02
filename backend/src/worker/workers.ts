@@ -14,11 +14,13 @@ import {
   DeleteUserJob,
   ExportMeJob,
   InitJob,
+  PlaylistRefresh,
   RefreshTokenJob,
   SyncPlaysJob,
   WeeklyReport,
 } from "../shared/types";
 import { NumericLiteral } from "typescript";
+import { PlaylistCreator } from "../shared/playlistCreator";
 
 export class UserWorker {
   private mailer: Emailer;
@@ -401,5 +403,17 @@ export class UserWorker {
       },
     });
     await this.processReport("monthly", "MONTH", 1, users);
+  }
+  async processPlaylistRefresh(job: Job<PlaylistRefresh>) {
+    let user = await this.db.users.findFirst({
+      where: { userid: job.data.userId },
+    });
+    if (user) {
+      let playlistCreator = new PlaylistCreator(
+        new SpotifyClient(user.token),
+        this.db
+      );
+      await playlistCreator.refreshPlaylist(job);
+    }
   }
 }

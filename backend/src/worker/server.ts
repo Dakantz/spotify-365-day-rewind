@@ -7,6 +7,7 @@ import {
   ExportMeJob,
   InitJob,
   MonthlyReport,
+  PlaylistRefresh,
   RefreshTokenJob,
   SyncPlaysJob,
   WeeklyReport,
@@ -15,8 +16,7 @@ import { UserWorker } from "./workers";
 (async () => {
   const connection = new IORedis({
     host: process.env.REDIS ? process.env.REDIS : "localhost",
-    port:process.env.REDIS_PORT ? parseInt(process.env.REDIS_PORT) : 6379,
-
+    port: process.env.REDIS_PORT ? parseInt(process.env.REDIS_PORT) : 6379,
   });
   connection.setMaxListeners(30);
   const db = new PrismaClient();
@@ -47,6 +47,13 @@ import { UserWorker } from "./workers";
       worker.processMonthlyReport.bind(worker),
       { connection }
     ),
+    new Worker(
+      PlaylistRefresh.jobName,
+      worker.processPlaylistRefresh.bind(worker),
+      {
+        connection,
+      }
+    ),
   ];
   const schedulers = [
     new QueueScheduler("cleaner", { connection }),
@@ -68,6 +75,7 @@ import { UserWorker } from "./workers";
     new QueueScheduler(DeleteUserJob.jobName, { connection }),
     new QueueScheduler(WeeklyReport.jobName, { connection }),
     new QueueScheduler(MonthlyReport.jobName, { connection }),
+    new QueueScheduler(PlaylistRefresh.jobName, { connection }),
   ];
 
   worker.workers = workers;

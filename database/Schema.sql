@@ -14,6 +14,7 @@ CREATE TABLE Users(
     redirectUrl VARCHAR(512) NOT NULL,
     report_weekly BOOLEAN DEFAULT(FALSE) NOT NULL,
     report_monthly BOOLEAN DEFAULT(FALSE) NOT NULL,
+    allow_public_display BOOLEAN NOT NULL DEFAULT false,
     uri VARCHAR(256) NOT NULL
 );
 CREATE TABLE Genres(
@@ -51,4 +52,13 @@ CREATE TABLE Plays(
     songId INT NOT NULL REFERENCES Songs,
     userId INT NOT NULL REFERENCES Users,
     CONSTRAINT u_constraint UNIQUE(time, songId, userId)
+);
+CREATE TABLE Playlists (
+    playlistId SERIAL PRIMARY KEY,
+    userId INT NOT NULL REFERENCES Users,
+    parameters json NOT NULL,
+    created TIMESTAMP NOT NULL DEFAULT now(),
+    last_update TIMESTAMP NOT NULL DEFAULT now(),
+    uri VARCHAR(256) NOT NULL,
+    active BOOLEAN NOT NULL DEFAULT TRUE
 );
