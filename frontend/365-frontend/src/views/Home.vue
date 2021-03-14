@@ -47,6 +47,7 @@ export default {
             "user-read-playback-state",
             "user-read-currently-playing",
             "playlist-modify-public",
+            "playlist-modify-private",
             "user-read-email",
             "user-library-read",
             "user-read-recently-played",

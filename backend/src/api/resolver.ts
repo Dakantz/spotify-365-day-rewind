@@ -58,7 +58,8 @@ export const resolvers = {
     ) => {
       let playlistCreator = new PlaylistCreator(
         new SpotifyClient(parent.auth_token),
-        context.db
+        context.db,
+        context.queues
       );
       return await playlistCreator.songsForPlaylist(
         args.params,

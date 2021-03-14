@@ -1,9 +1,10 @@
-import { PrismaClient } from "@prisma/client";
+import { JsonObject, PrismaClient } from "@prisma/client";
 import { Job } from "bullmq";
+import { queueMap } from ".";
 import { GQLImage, GQLPublicUser, GQLSSong } from "./returnTypes";
-import { SpotifyClient } from "./spotify";
+import { idFromUri, SpotifyClient } from "./spotify";
 import { Stats } from "./statistics";
-import { PlaylistRefresh } from "./types";
+import { PlaylistRefresh, SyncPlaysJob } from "./types";
 export type RefreshIntervals = "DAILY" | "WEEKLY" | "MONTHLY" | "NEVER";
 export type PlaylistSource = "GLOBAL" | "PERSONAL";
 export interface CreatePlaylistParams {
@@ -13,10 +14,23 @@ export interface CreatePlaylistParams {
   timespan_ms: number;
   name: string;
   source: PlaylistSource;
+  description: string;
 }
 
 export const PLAYLIST_ITEMS = 30;
 export const SONGS_CONSIDERED = 200;
+
+function intervalToCron(interval: RefreshIntervals) {
+  switch (interval) {
+    case "DAILY":
+      return "0 0 * * *";
+    case "WEEKLY":
+      "0 0 * * 0";
+    case "MONTHLY":
+      return "0 0 1 * *";
+  }
+}
+
 export interface TargetValues {
   [key: string]: number | undefined;
   acousticness?: number;
@@ -49,7 +63,11 @@ export class GQLPlaylistCreationResponse {
 }
 export class PlaylistCreator {
   private stats: Stats;
-  constructor(private spotify: SpotifyClient, private db: PrismaClient) {
+  constructor(
+    private spotify: SpotifyClient,
+    private db: PrismaClient,
+    private queues: queueMap
+  ) {
     this.stats = new Stats(db);
   }
   public async filterSongsForTarget(
@@ -146,15 +164,47 @@ export class PlaylistCreator {
             params.source == "PERSONAL" ? userId : undefined
           )
         ).map((stat) => stat.artist.id);
+        if (seed_artist_ids.length + seed_song_ids.length == 0) {
+          return [];
+        }
         let recommendations = await this.spotify.recommendations(
           seed_artist_ids,
           seed_song_ids
         );
         return recommendations.tracks.map(
-          (track: any) => new GQLSSong(track.id, track.name, track.album.images)
+          (track: any) =>
+            new GQLSSong(track.id, track.name, track.album.images, track.uri)
         );
     }
     return [];
+  }
+  public async updatePlaylist(
+    playlistId: number,
+    userId: number,
+    songs: GQLSSong[]
+  ): Promise<boolean> {
+    let playlist = await this.db.playlists.findFirst({
+      where: {
+        playlistid: playlistId,
+      },
+    });
+    if (playlist) {
+      await this.spotify.replacePlaylistItems(
+        idFromUri(playlist.uri),
+        songs.map((song) => song.uri)
+      );
+      await this.db.playlists.update({
+        data: {
+          last_update: new Date(),
+        },
+        where: {
+          playlistid: playlistId,
+        },
+      });
+      return true;
+    } else {
+      return false;
+    }
   }
   public async createPlaylist(
     params: CreatePlaylistParams,
@@ -166,15 +216,45 @@ export class PlaylistCreator {
        * 2. Create job (if repeated)
        * 3. Start job once
        */
-      let songs = this.songsForPlaylist(params, userId);
-
-      let playlist = this.db.playlists.create({
-        data: {
-          parameters: {},
+      let songs = await this.songsForPlaylist(params, userId);
+      let user = await this.db.users.findFirst({
+        where: {
           userid: userId,
         },
       });
-      if (params.refreshEvery != "NEVER") {
+      if (user) {
+        let playlist = await this.spotify.createPlaylist(
+          idFromUri(user?.uri),
+          params.name,
+          false,
+          false
+        );
+        let playlist_db = await this.db.playlists.create({
+          data: {
+            parameters: (params as unknown) as JsonObject,
+            uri: playlist.uri,
+            userid: userId,
+            active: true,
+          },
+        });
+        this.updatePlaylist(playlist_db.playlistid, userId, songs);
+        if (params.refreshEvery != "NEVER") {
+          this.queues[PlaylistRefresh.jobName].add(
+            `refresh-playlist:${playlist_db.playlistid}`,
+            new PlaylistRefresh(userId, playlist_db.playlistid),
+            {
+              repeat: { cron: intervalToCron(params.refreshEvery) },
+            }
+          );
+        } else {
+          // do nothing
+        }
+        return new GQLPlaylistCreationResponse(
+          true,
+          "Successfully created playlist and queued job!"
+        );
+      } else {
+        throw new Error("User not found!");
       }
     } catch (error) {
       console.error("Failed to create playlist, reason:", error);
@@ -184,5 +264,25 @@ export class PlaylistCreator {
       );
     }
   }
-  public async refreshPlaylist(job: Job<PlaylistRefresh>) {}
+  public async refreshPlaylist(job: Job<PlaylistRefresh>) {
+    let playlist_db = await this.db.playlists.findFirst({
+      where: {
+        playlistid: job.data.playlistId,
+      },
+    });
+    if (playlist_db && playlist_db.active) {
+      console.log("Updating playlist for user ", job.data.userId);
+      let songs = await this.songsForPlaylist(
+        (playlist_db.parameters as unknown) as CreatePlaylistParams,
+        job.data.userId
+      );
+      await this.updatePlaylist(playlist_db.playlistid, job.data.userId, songs);
+      console.log("done!");
+    } else {
+      console.warn(
+        "Playlist not found or not active! id:",
+        job.data.playlistId
+      );
+    }
+  }
 }

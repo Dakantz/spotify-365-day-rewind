@@ -163,7 +163,8 @@ export class GQLSSong {
   constructor(
     public id: string,
     public name: string,
-    public cover: GQLImage[]
+    public cover: GQLImage[],
+    public uri: string
   ) {}
 }
 

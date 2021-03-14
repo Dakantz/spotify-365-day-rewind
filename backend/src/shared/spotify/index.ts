@@ -1,5 +1,9 @@
 import axios, { Method } from "axios";
 import querystring from "querystring";
+
+export function idFromUri(uri:string){
+  return uri.split(":")[2]
+}
 export class SpotifyClient {
   public baseUrl: string = "https://api.spotify.com/v1";
   private headers: { [key: string]: string } = {};
@@ -9,7 +13,8 @@ export class SpotifyClient {
   private async requestData(
     url: string,
     query: any = {},
-    method: Method = "GET"
+    method: Method = "GET",
+    data: any = {}
   ) {
     while (true) {
       try {
@@ -17,6 +22,7 @@ export class SpotifyClient {
           url: this.baseUrl + url,
           method,
           params: query,
+          data,
           headers: this.headers,
         });
       } catch (error) {
@@ -61,6 +67,30 @@ export class SpotifyClient {
   }
   public async user(id: string) {
     return (await this.requestData("/users/" + id)).data;
+  }
+
+  public async createPlaylist(
+    userid: string,
+    name: string,
+    playlist_public: boolean = false,
+    collaborative: boolean = false,
+    description: string = ""
+  ) {
+    return (
+      await this.requestData(`/users/${userid}/playlist`, {}, "POST", {
+        name,
+        collaborative,
+        public: playlist_public,
+        description,
+      })
+    ).data;
+  }
+  public async replacePlaylistItems(playlistid:string,uris:string[]){
+    return (
+      await this.requestData(`/playlists/${playlistid}/tracks`, {}, "PUT", {
+        uris
+      })
+    ).data;
   }
   public async recommendations(artist_ids: string[], song_ids: string[]) {
     return (

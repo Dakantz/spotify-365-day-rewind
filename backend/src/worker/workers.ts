@@ -1,7 +1,7 @@
 import { PrismaClient, users } from "@prisma/client";
 import { Job, Queue, QueueScheduler, Worker } from "bullmq";
 import { fixSchemaAst } from "graphql-tools";
-import { SpotifyClient, SpotifyTokenClient } from "../shared";
+import { queueMap, SpotifyClient, SpotifyTokenClient } from "../shared";
 import { Emailer } from "../shared/emailer";
 import { SpotifySyncHelper } from "../shared/helpers";
 import { GQLStats, ScaleSteps } from "../shared/returnTypes";
@@ -26,6 +26,7 @@ export class UserWorker {
   private mailer: Emailer;
   public workers: Worker[];
   public schedulers: QueueScheduler[];
+  public queues: queueMap = {};
   constructor(public db: PrismaClient) {
     this.workers = [];
     this.schedulers = [];
@@ -411,7 +412,8 @@ export class UserWorker {
     if (user) {
       let playlistCreator = new PlaylistCreator(
         new SpotifyClient(user.token),
-        this.db
+        this.db,
+        this.queues
       );
       await playlistCreator.refreshPlaylist(job);
     }

@@ -194,7 +194,7 @@ OFFSET ${skip}`;
         : [];
     return songs.map((song: any, index: number) => {
       return new GQLSongStats(
-        new GQLSSong(song.id, song.name, song.album.images),
+        new GQLSSong(song.id, song.name, song.album.images,song.uri),
         data[index].playtime,
         data[index].plays
       );
