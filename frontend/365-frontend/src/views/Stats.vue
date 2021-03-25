@@ -35,7 +35,7 @@ export default {
       query: gql`
         query me {
           me {
-            ... on User {
+            ... on MeUser {
               name
               email
               reportIntervals

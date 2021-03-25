@@ -1,6 +1,6 @@
 import { users } from "@prisma/client";
 import { IResolvers } from "graphql-tools";
-import { SpotifyClient } from "../shared";
+import { idFromUri, SpotifyClient } from "../shared";
 import { DeleteUserJob, ExportMeJob } from "../shared/types";
 import { createUser, SContext } from "./auth";
 import {
@@ -8,12 +8,16 @@ import {
   GQLError,
   GQLMessage,
   GQLMeUser,
+  GQLPlaylist,
   GQLPublicUser,
   GQLSSong,
   GQLStats,
 } from "../shared/returnTypes";
 import { Stats } from "../shared/statistics";
-import { PlaylistCreator } from "../shared/playlistCreator";
+import {
+  CreatePlaylistParams,
+  PlaylistCreator,
+} from "../shared/playlistCreator";
 export const resolvers = {
   Song: {
     artists: async (parent: GQLSSong, args: any, context: SContext) => {
@@ -51,6 +55,29 @@ export const resolvers = {
     },
   },
   MeUser: {
+    playlists: async (parent: GQLMeUser, args: any, context: SContext) => {
+      let playlists = await context.db.playlists.findMany({
+        where: {
+          userid: context.user?.uid,
+        },
+      });
+      let playlists_built: GQLPlaylist[] = playlists.map((playlist) => {
+        let parameters = (playlist.parameters as unknown) as CreatePlaylistParams;
+        return new GQLPlaylist(
+          playlist.playlistid + "",
+          parameters.name,
+          playlist.uri,
+          parent,
+          parameters.mode,
+          parameters.filtering,
+          parameters.refreshEvery,
+          parameters.timespan_ms,
+          parameters.source,
+          parameters.description
+        );
+      });
+      return playlists_built;
+    },
     previewPlaylist: async (
       parent: GQLMeUser,
       args: { [key: string]: any },
@@ -184,82 +211,102 @@ export const resolvers = {
     },
   },
   Mutation: {
-    me: () => {
-      return {
-        async setReportInterval(
-          args: { [key: string]: string | boolean },
-          context: SContext,
-          info: any
-        ) {
-          if (context.user) {
-            try {
-              switch (args.scale) {
-                case "MONTH":
-                  await context.db.users.update({
-                    where: { userid: context.user.uid },
-                    data: {
-                      report_monthly:
-                        (args.val as boolean) || args.val == "true",
-                    },
-                  });
-                  break;
-                case "WEEK":
-                  await context.db.users.update({
-                    where: { userid: context.user.uid },
-                    data: {
-                      report_weekly:
-                        (args.val as boolean) || args.val == "true",
-                    },
-                  });
-                  break;
-                default:
-                  return new GQLError(
-                    "Other granularity currently unsupported!"
-                  );
+    me: (info: any, args: { [key: string]: any }, context: SContext) => {
+      if (context.user) {
+        return {
+          async createPlaylist(
+            args: { [key: string]: any },
+            context: SContext
+          ) {
+            if (context.spotifyToken) {
+              let playlistCreator = new PlaylistCreator(
+                new SpotifyClient(context.spotifyToken),
+                context.db,
+                context.queues
+              );
+              return await playlistCreator.createPlaylist(
+                args.params,
+                context.user?.uid as number
+              );
+            }
+          },
+          async setReportInterval(
+            args: { [key: string]: string | boolean },
+            context: SContext,
+            info: any
+          ) {
+            if (context.user) {
+              try {
+                switch (args.scale) {
+                  case "MONTH":
+                    await context.db.users.update({
+                      where: { userid: context.user.uid },
+                      data: {
+                        report_monthly:
+                          (args.val as boolean) || args.val == "true",
+                      },
+                    });
+                    break;
+                  case "WEEK":
+                    await context.db.users.update({
+                      where: { userid: context.user.uid },
+                      data: {
+                        report_weekly:
+                          (args.val as boolean) || args.val == "true",
+                      },
+                    });
+                    break;
+                  default:
+                    return new GQLError(
+                      "Other granularity currently unsupported!"
+                    );
+                }
+                return new GQLMessage("Success!");
+              } catch (e) {
+                console.error("Error during update on report", e);
               }
-              return new GQLMessage("Success!");
-            } catch (e) {
-              console.error("Error during update on report", e);
-            }
-          } else {
-            return new GQLError("Must be logged in!");
-          }
-        },
-        delete: async (parent: any, context: SContext, info: any) => {
-          try {
-            if (context.user) {
-              await context.queues[DeleteUserJob.jobName].add(
-                `delete-${context.user.uid}`,
-                new DeleteUserJob(context.user.uid)
-              );
-              return new GQLMessage("Started deletion!");
             } else {
-              return new GQLError("Can't delete if not logged in!");
+              return new GQLError("Must be logged in!");
             }
-          } catch (error) {
-            console.error("Error creating user", error);
-            return new GQLError(error.message);
-          }
-        },
-        triggerExport: async (parent: any, context: SContext, info: any) => {
-          try {
-            if (context.user) {
-              await context.queues[ExportMeJob.jobName].add(
-                `delete-${context.user.uid}`,
-                new ExportMeJob(context.user.uid)
-              );
-              return new GQLMessage(
-                "Triggered export - you will receive an email when its ready!"
-              );
-            } else {
-              return new GQLError("Can't export if not logged in!");
+          },
+          delete: async (parent: any, context: SContext, info: any) => {
+            try {
+              if (context.user) {
+                await context.queues[DeleteUserJob.jobName].add(
+                  `delete-${context.user.uid}`,
+                  new DeleteUserJob(context.user.uid)
+                );
+                return new GQLMessage("Started deletion!");
+              } else {
+                return new GQLError("Can't delete if not logged in!");
+              }
+            } catch (error) {
+              console.error("Error creating user", error);
+              return new GQLError(error.message);
             }
-          } catch (error) {
-            console.error("Error creating user", error);
-            return new GQLError(error.message);
-          }
-        },
-      };
+          },
+          triggerExport: async (parent: any, context: SContext, info: any) => {
+            try {
+              if (context.user) {
+                await context.queues[ExportMeJob.jobName].add(
+                  `delete-${context.user.uid}`,
+                  new ExportMeJob(context.user.uid)
+                );
+                return new GQLMessage(
+                  "Triggered export - you will receive an email when its ready!"
+                );
+              } else {
+                return new GQLError("Can't export if not logged in!");
+              }
+            } catch (error) {
+              console.error("Error creating user", error);
+              return new GQLError(error.message);
+            }
+          },
+        };
+      } else {
+        throw new Error("Can't execute User Mutations if not logged in!");
+      }
     },
     registerOrLogin: async (
       parent: any,

@@ -1,8 +1,8 @@
 import axios, { Method } from "axios";
 import querystring from "querystring";
 
-export function idFromUri(uri:string){
-  return uri.split(":")[2]
+export function idFromUri(uri: string) {
+  return uri.split(":")[2];
 }
 export class SpotifyClient {
   public baseUrl: string = "https://api.spotify.com/v1";
@@ -14,7 +14,7 @@ export class SpotifyClient {
     url: string,
     query: any = {},
     method: Method = "GET",
-    data: any = {}
+    data: any = null
   ) {
     while (true) {
       try {
@@ -26,9 +26,12 @@ export class SpotifyClient {
           headers: this.headers,
         });
       } catch (error) {
-        if (error.status == 429) {
+        if (error.response && error.response.status == 429) {
           await new Promise((resolve) =>
-            setTimeout(() => resolve(null), error.headers["Retry-After"] * 1000)
+            setTimeout(
+              () => resolve(null),
+              (error.headers["Retry-After"] + 1) * 1000
+            )
           );
         } else {
           console.error("Error while requesting data from spotify", error);
@@ -77,7 +80,7 @@ export class SpotifyClient {
     description: string = ""
   ) {
     return (
-      await this.requestData(`/users/${userid}/playlist`, {}, "POST", {
+      await this.requestData(`/users/${userid}/playlists`, {}, "POST", {
         name,
         collaborative,
         public: playlist_public,
@@ -85,12 +88,15 @@ export class SpotifyClient {
       })
     ).data;
   }
-  public async replacePlaylistItems(playlistid:string,uris:string[]){
+  public async replacePlaylistItems(playlistid: string, uris: string[]) {
     return (
       await this.requestData(`/playlists/${playlistid}/tracks`, {}, "PUT", {
-        uris
+        uris,
       })
     ).data;
+  }
+  public async playlist(playlistid: string) {
+    return (await this.requestData(`/playlists/${playlistid}/tracks`)).data;
   }
   public async recommendations(artist_ids: string[], song_ids: string[]) {
     return (

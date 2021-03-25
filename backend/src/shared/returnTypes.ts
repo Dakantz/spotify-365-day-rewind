@@ -1,6 +1,11 @@
 import { artists, songs } from "@prisma/client";
 import { SContext } from "../api/auth";
-import { SpotifyClient } from "./spotify";
+import {
+  CreatePlaylistParams,
+  PlaylistSource,
+  RefreshIntervals,
+} from "./playlistCreator";
+import { idFromUri, SpotifyClient } from "./spotify";
 import { Stats } from "./statistics";
 
 export class GQLError {
@@ -22,8 +27,8 @@ export abstract class GeneralUser {
     public auth_token: string
   ) {}
 
-  async image_url(parent: GeneralUser) {
-    let spotify = new SpotifyClient(parent.auth_token);
+  async image_url() {
+    let spotify = new SpotifyClient(this.auth_token);
     try {
       let me = await spotify.user(this.id);
       return me.images && me.images.length > 0 ? me.images[0].url : null;
@@ -31,14 +36,10 @@ export abstract class GeneralUser {
       return null;
     }
   }
-  async mostPlayedSongs(
-    parent: GeneralUser,
-    args: { [key: string]: any },
-    context: SContext
-  ) {
+  async mostPlayedSongs(args: { [key: string]: any }, context: SContext) {
     let stats = new Stats(context.db);
     return await stats.mostPlayedSongs(
-      new SpotifyClient(parent.auth_token),
+      new SpotifyClient(this.auth_token),
       args.to ? new Date(args.to) : undefined,
       args.take,
       args.skip,
@@ -47,14 +48,10 @@ export abstract class GeneralUser {
     );
   }
 
-  async mostPlayedArtists(
-    parent: GeneralUser,
-    args: { [key: string]: any },
-    context: SContext
-  ) {
+  async mostPlayedArtists(args: { [key: string]: any }, context: SContext) {
     let stats = new Stats(context.db);
     return await stats.mostPlayedArtists(
-      new SpotifyClient(parent.auth_token),
+      new SpotifyClient(this.auth_token),
       args.to ? new Date(args.to) : undefined,
       args.take,
       args.skip,
@@ -188,4 +185,33 @@ export class GQLLeaderboardEntry {
     public minutes: number,
     public plays: number
   ) {}
+}
+export class GQLPlaylist implements CreatePlaylistParams {
+  get __typename() {
+    return "Playlist";
+  }
+  constructor(
+    public id: string,
+    public name: string,
+    public uri: string,
+    public user: GQLPublicUser,
+    public mode: "TOP" | "COLLABORATIVE" | "RECOMMENDATIONS",
+    public filtering: "TOP" | "TOP_UPBEAT" | "TOP_CHILL",
+    public refreshEvery: RefreshIntervals,
+    public timespan_ms: number,
+    public source: PlaylistSource,
+    public description: string
+  ) {}
+  async songs(args: any, context: SContext) {
+    if (this.user) {
+      let spotify = new SpotifyClient(this.user.auth_token);
+      let playlist = await spotify.playlist(idFromUri(this.uri));
+      return playlist.items.map((item: any) => {
+        let song = item.track;
+        return new GQLSSong(song.id, song.name, song.album.images, song.uri);
+      });
+    } else {
+      return [];
+    }
+  }
 }

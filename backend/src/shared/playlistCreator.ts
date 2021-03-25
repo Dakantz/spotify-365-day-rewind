@@ -28,6 +28,8 @@ function intervalToCron(interval: RefreshIntervals) {
       "0 0 * * 0";
     case "MONTHLY":
       return "0 0 1 * *";
+    default:
+      throw new Error("Unknown interval!");
   }
 }
 
@@ -226,19 +228,24 @@ export class PlaylistCreator {
         let playlist = await this.spotify.createPlaylist(
           idFromUri(user?.uri),
           params.name,
-          false,
+          true,
           false
         );
         let playlist_db = await this.db.playlists.create({
           data: {
             parameters: (params as unknown) as JsonObject,
             uri: playlist.uri,
-            userid: userId,
             active: true,
+            userid: user.userid,
+            users: {
+              connect: {
+                userid: user.userid,
+              },
+            },
           },
         });
-        this.updatePlaylist(playlist_db.playlistid, userId, songs);
-        if (params.refreshEvery != "NEVER") {
+        await this.updatePlaylist(playlist_db.playlistid, userId, songs);
+        if (params.refreshEvery && params.refreshEvery != "NEVER") {
           this.queues[PlaylistRefresh.jobName].add(
             `refresh-playlist:${playlist_db.playlistid}`,
             new PlaylistRefresh(userId, playlist_db.playlistid),

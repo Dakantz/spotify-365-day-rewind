@@ -42,7 +42,7 @@ export default {
       query: gql`
         query steps($from: String, $to: String, $scale: Scale!, $steps: Int!, $global:Boolean) {
           me {
-            ... on User {
+            ... on MeUser {
               name
               email
               stats(scale: $scale, steps: $steps, from: $from, to: $to, global: $global) {

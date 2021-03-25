@@ -5,6 +5,7 @@ import Callback from '../views/Callback.vue'
 import Stats from '../views/Stats.vue'
 import GlobalStats from '../views/GlobalStats.vue'
 import Settings from '../views/Settings.vue'
+import PlaylistManager from '../views/PlaylistManager.vue'
 
 
 Vue.use(VueRouter)
@@ -29,6 +30,11 @@ const routes = [
     path: '/global-stats',
     name: 'GlobalStats',
     component: GlobalStats
+  },
+  {
+    path: '/playlist-manager',
+    name: 'PlaylistManager',
+    component: PlaylistManager
   },
   {
     path: '/settings',

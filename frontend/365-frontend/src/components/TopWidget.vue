@@ -80,7 +80,7 @@ export default {
         return gql`
         query topStats($from: String, $to: String, $take:Int, $global:Boolean) {
           me {
-            ... on User {
+            ... on MeUser {
               name
               email
               ${

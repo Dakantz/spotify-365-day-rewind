@@ -59,7 +59,7 @@ export default {
       query: gql`
         query totalTime($from: String, $to: String, $global: Boolean) {
           me {
-            ... on User {
+            ... on MeUser {
               name
               email
               stats(

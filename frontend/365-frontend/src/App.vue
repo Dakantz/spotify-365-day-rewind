@@ -15,6 +15,9 @@
       <v-btn v-if="loggedIn" text to="/settings" class="mr-2">
         <span >Settings</span>
       </v-btn>
+      <v-btn v-if="loggedIn" text to="/playlist-manager" class="mr-2">
+        <span >Playlists</span>
+      </v-btn>
 
        <v-btn text to="/about" class="mr-2">
         <span >About</span>
@@ -70,6 +73,7 @@ export default {
             "user-read-playback-state",
             "user-read-currently-playing",
             "playlist-modify-public",
+            "playlist-modify-private",
             "user-read-email",
             "user-library-read",
             "user-read-recently-played",
