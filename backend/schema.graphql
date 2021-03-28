@@ -45,7 +45,7 @@ type Song {
   id: String!
   name: String!
   cover: [Image]!
-  artists: [Artist]!
+  artists: [Artist]
 }
 
 type SongInfo {

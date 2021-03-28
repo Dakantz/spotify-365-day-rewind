@@ -1,7 +1,7 @@
 <template>
   <div class="stats">
 
-    <div class="text-h2 ma-12">Site-Wide statistics</div>
+    <div class="text-h3 ma-12">Site-Wide statistics</div>
     <v-container>
       <v-row>
         <v-col>

@@ -4,6 +4,7 @@ Artists,
 ArtistGenres,
 Albums,
 Plays,
+Playlists,
 Songs;
 CREATE TABLE Users(
     userId SERIAL PRIMARY KEY,

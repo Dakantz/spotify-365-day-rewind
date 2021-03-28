@@ -5,6 +5,7 @@ import { DeleteUserJob, ExportMeJob } from "../shared/types";
 import { createUser, SContext } from "./auth";
 import {
   GeneralUser,
+  GQLArtist,
   GQLError,
   GQLMessage,
   GQLMeUser,
@@ -33,7 +34,15 @@ export const resolvers = {
           },
         })
         .artists();
-      return [artists];
+      if (artists) {
+        let id = idFromUri(artists.uri);
+        let artist_spotify = await new SpotifyClient(
+          context.spotifyToken as string
+        ).artist(id);
+        return [new GQLArtist(id, artists.name, artist_spotify.images)];
+      } else {
+        return [];
+      }
     },
   },
   Stats: {
