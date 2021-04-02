@@ -130,7 +130,7 @@ export default {
   },
   methods: {
     refreshPlaylists() {
-      this.$apollo.queries.playlists.refresh();
+      this.$apollo.queries.playlists.refetch();
     },
     nameFromType(property, type) {
       if (property in this) {
@@ -151,7 +151,7 @@ export default {
         filtering: this.filtering,
         refreshEvery: this.refreshInterval,
         timespan_ms: this.timeframeSelection
-          ? new Date().getTime() - this.timeframeSelection.interval
+          ? this.timeframeSelection.interval
           : 1000 * 60 * 60 * 24 * 7, //def: 1 week
         name: this.name,
         source: this.source,

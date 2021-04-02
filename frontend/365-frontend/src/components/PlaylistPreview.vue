@@ -10,11 +10,11 @@
         <v-card-title>Playlist Preview &amp; Create </v-card-title>
         <v-card-text>
           <v-progress-linear
-            v-if="$apollo.queries.preview.loading"
+            v-if="$apollo.queries.preview_playlist.loading"
             indeterminate
           ></v-progress-linear>
           <v-list v-else three-line>
-            <template v-for="song in preview">
+            <template v-for="song in preview_playlist">
               <v-list-item :key="song.id">
                 <v-list-item-avatar>
                   <v-img :src="song.cover[0].url"></v-img>
@@ -46,6 +46,12 @@ import gql from "graphql-tag";
 export default {
   props: {
     options: Object,
+  },
+  watch: {
+    active(a_new) {
+      console.log("Changed dialog...", a_new);
+      if (a_new) this.$apollo.queries.preview_playlist.refetch();
+    },
   },
   methods: {
     async createPlaylist() {
@@ -84,10 +90,8 @@ export default {
   },
 
   apollo: {
-    preview: {
-      skip() {
-        return !this.active;
-      },
+    preview_playlist: {
+      deep: true,
       variables() {
         return {
           input: this.options,

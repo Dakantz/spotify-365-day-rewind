@@ -184,7 +184,7 @@ ${
     : `plays.time <'${to.toISOString()}'`
 }
 GROUP BY s.songid
-ORDER BY plays DESC
+ORDER BY plays DESC, playtime DESC
 LIMIT ${take}
 OFFSET ${skip}`;
     let data = await this.db.$queryRaw(query);
