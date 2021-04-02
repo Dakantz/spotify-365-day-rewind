@@ -204,14 +204,14 @@ export class PlaylistCreator {
           playlistid: playlistId,
         },
       });
-      let chenged_response = await this.spotify.changePlaylist(
-        idFromUri(playlist.uri),
-        {
-          description: `Created by <a href="https://365-days-of-rewind.dakantz.at/">365-rewind</a> \n
-        Last update:${moment().format("YYYY-MM-DD")}
+      //This action currently does nothing
+      //y u be like this spotify :'(
+      await this.spotify.changePlaylist(idFromUri(playlist.uri), {
+        description: `Created by 365-days-of-rewind. Last update: ${moment().format(
+          "YYYY-MM-DD"
+        )}
         `,
-        }
-      );
+      });
       return true;
     } else {
       return false;
@@ -286,13 +286,33 @@ export class PlaylistCreator {
       },
     });
     if (playlist_db && playlist_db.active) {
-      console.log("Updating playlist for user ", job.data.userId);
-      let songs = await this.songsForPlaylist(
-        (playlist_db.parameters as unknown) as CreatePlaylistParams,
-        job.data.userId
+      let playlists = await this.spotify.myPlaylists();
+      let found_playlist = playlists.items.find(
+        (playlist: any) => playlist.uri == playlist_db?.uri
       );
-      await this.updatePlaylist(playlist_db.playlistid, job.data.userId, songs);
-      console.log("done!");
+      if (found_playlist) {
+        console.log("Updating playlist for user ", job.data.userId);
+        let songs = await this.songsForPlaylist(
+          (playlist_db.parameters as unknown) as CreatePlaylistParams,
+          job.data.userId
+        );
+        await this.updatePlaylist(
+          playlist_db.playlistid,
+          job.data.userId,
+          songs
+        );
+        console.log("done!");
+      } else {
+        console.log("Removing deleted playlist!");
+        await this.db.playlists.delete({
+          where: {
+            playlistid: playlist_db.playlistid,
+          },
+        });
+        await this.queues[PlaylistRefresh.jobName].removeRepeatableByKey(
+          job.id as string
+        );
+      }
     } else {
       console.warn(
         "Playlist not found or not active! id:",

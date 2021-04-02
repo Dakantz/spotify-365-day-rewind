@@ -1,7 +1,12 @@
 import { PrismaClient, users } from "@prisma/client";
 import { Job, Queue, QueueScheduler, Worker } from "bullmq";
 import { fixSchemaAst } from "graphql-tools";
-import { queueMap, SpotifyClient, SpotifyTokenClient } from "../shared";
+import {
+  idFromUri,
+  queueMap,
+  SpotifyClient,
+  SpotifyTokenClient,
+} from "../shared";
 import { Emailer } from "../shared/emailer";
 import { SpotifySyncHelper } from "../shared/helpers";
 import { GQLStats, ScaleSteps } from "../shared/returnTypes";

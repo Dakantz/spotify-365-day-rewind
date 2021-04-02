@@ -180,6 +180,10 @@ import { UserWorker } from "./workers";
           },
         }
       );
+      await queues[PlaylistRefresh.jobName].add(
+        `refresh-${playlist.playlistid}`,
+        new PlaylistRefresh(playlist.userid, playlist.playlistid)
+      );
     }
     await queues["cleaner"].add("cleaner-startup", {}, {});
     await queues["cleaner"].add(

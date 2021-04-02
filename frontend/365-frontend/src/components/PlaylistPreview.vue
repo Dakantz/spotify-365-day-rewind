@@ -32,7 +32,9 @@
         </v-card-text>
         <v-card-actions>
           <v-spacer></v-spacer>
-          <v-btn text v-on:click="createPlaylist">Create!</v-btn></v-card-actions
+          <v-btn text v-on:click="createPlaylist" :loading="creating"
+            >Create!</v-btn
+          ></v-card-actions
         >
       </v-card>
     </v-dialog>
@@ -47,6 +49,7 @@ export default {
   },
   methods: {
     async createPlaylist() {
+      this.creating = true;
       let creationResult = await this.$apollo.mutate({
         // Query
         mutation: gql`
@@ -69,13 +72,14 @@ export default {
       console.log(creationResult.data);
       if (creationResult.data.me.createPlaylist.success) {
         this.active = false;
-        this.$emit("created")
+        this.$emit("created");
       } else {
         console.error(
           "Failed to create playlist, reason:",
           creationResult.data.me.createPlaylist.message
         );
       }
+      this.creating = false;
     },
   },
 
@@ -115,6 +119,7 @@ export default {
   },
   data: () => {
     return {
+      creating: false,
       active: false,
     };
   },

@@ -89,9 +89,28 @@
           <v-expansion-panel-header>
             {{ playlist.name }}
           </v-expansion-panel-header>
-          <v-expansion-panel-content> </v-expansion-panel-content>
+          <v-expansion-panel-content>
+            <v-container>
+              <v-row>
+                <v-col>
+                  Filter Mode:
+                  {{ nameFromType("filterings", playlist.filtering) }}
+                </v-col>
+                <v-col>
+                  Creation Mode: {{ nameFromType("modes", playlist.mode) }}
+                </v-col>
+                <v-col>
+                  Source: {{ nameFromType("sources", playlist.source) }}
+                </v-col>
+              </v-row>
+            </v-container>
+          </v-expansion-panel-content>
         </v-expansion-panel>
       </v-expansion-panels>
+      <div class="font-weight-thin mt-12">
+        Note: when deleting a playlist on Spotify, it's automatically deleted
+        here!
+      </div>
     </div>
   </div>
 </template>
@@ -113,7 +132,18 @@ export default {
     refreshPlaylists() {
       this.$apollo.queries.playlists.refresh();
     },
+    nameFromType(property, type) {
+      if (property in this) {
+        let prop = this[property];
+        let selection = prop.find((sel) => sel.type == type);
+        if (selection) {
+          return selection.name;
+        }
+        return null;
+      }
+    },
   },
+
   computed: {
     playlistOptions() {
       return {

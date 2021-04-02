@@ -72,6 +72,17 @@ export class SpotifyClient {
     return (await this.requestData("/users/" + id)).data;
   }
 
+  public async playlistOfUser(id: string) {
+    return (
+      await this.requestData(`/users/${id}/playlists`)
+    ).data;
+  }
+  public async myPlaylists() {
+    return (
+      await this.requestData(`/me/playlists`)
+    ).data;
+  }
+
   public async createPlaylist(
     userid: string,
     name: string,
