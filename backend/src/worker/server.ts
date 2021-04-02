@@ -2,6 +2,7 @@ import { PrismaClient } from "@prisma/client";
 import { Job, Queue, QueueScheduler, Worker } from "bullmq";
 import IORedis from "ioredis";
 import { buildQueueMap, SpotifyClient } from "../shared";
+import { intervalToCron } from "../shared/playlistCreator";
 import {
   DeleteUserJob,
   ExportMeJob,
@@ -164,6 +165,18 @@ import { UserWorker } from "./workers";
           jobId: `play:${user.userid}`,
           repeat: {
             every: 1000 * 60 * 5, //5 min
+          },
+        }
+      );
+    }
+    let playlists = await db.playlists.findMany();
+    for (let playlist of playlists) {
+      await queues[PlaylistRefresh.jobName].add(
+        `refresh-${playlist.playlistid}`,
+        new PlaylistRefresh(playlist.userid, playlist.playlistid),
+        {
+          repeat: {
+            cron: intervalToCron((playlist.parameters as any).refreshEvery), //5 min
           },
         }
       );

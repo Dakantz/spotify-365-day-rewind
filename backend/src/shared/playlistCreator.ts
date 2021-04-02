@@ -1,5 +1,6 @@
 import { JsonObject, PrismaClient } from "@prisma/client";
 import { Job } from "bullmq";
+import moment from "moment";
 import { queueMap } from ".";
 import { GQLImage, GQLPublicUser, GQLSSong } from "./returnTypes";
 import { idFromUri, SpotifyClient } from "./spotify";
@@ -20,7 +21,7 @@ export interface CreatePlaylistParams {
 export const PLAYLIST_ITEMS = 30;
 export const SONGS_CONSIDERED = 200;
 
-function intervalToCron(interval: RefreshIntervals) {
+export function intervalToCron(interval: RefreshIntervals) {
   switch (interval) {
     case "DAILY":
       return "0 0 * * *";
@@ -203,6 +204,14 @@ export class PlaylistCreator {
           playlistid: playlistId,
         },
       });
+      let chenged_response = await this.spotify.changePlaylist(
+        idFromUri(playlist.uri),
+        {
+          description: `Created by <a href="https://365-days-of-rewind.dakantz.at/">365-rewind</a> \n
+        Last update:${moment().format("YYYY-MM-DD")}
+        `,
+        }
+      );
       return true;
     } else {
       return false;
@@ -236,7 +245,6 @@ export class PlaylistCreator {
             parameters: (params as unknown) as JsonObject,
             uri: playlist.uri,
             active: true,
-            userid: user.userid,
             users: {
               connect: {
                 userid: user.userid,

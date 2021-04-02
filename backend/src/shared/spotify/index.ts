@@ -95,6 +95,14 @@ export class SpotifyClient {
       })
     ).data;
   }
+  public async changePlaylist(
+    playlistid: string,
+    options: { [key: string]: string | boolean }
+  ) {
+    return (
+      await this.requestData(`/playlists/${playlistid}`, {}, "PUT", options)
+    ).data;
+  }
   public async playlist(playlistid: string) {
     return (await this.requestData(`/playlists/${playlistid}/tracks`)).data;
   }

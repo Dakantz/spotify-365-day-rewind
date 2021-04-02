@@ -64,17 +64,17 @@ model songs {
 }
 
 model users {
-  userid               Int        @id @default(autoincrement())
+  userid               Int         @id @default(autoincrement())
   name                 String
   email                String
   token                String
   refreshtoken         String
   redirecturl          String
   uri                  String
-  report_weekly        Boolean    @default(false)
-  report_monthly       Boolean    @default(false)
-  allow_public_display Boolean    @default(false)
-  playlists            playlists?
+  report_weekly        Boolean     @default(false)
+  report_monthly       Boolean     @default(false)
+  allow_public_display Boolean     @default(false)
+  playlists            playlists[]
   plays                plays[]
 }
 
@@ -86,5 +86,5 @@ model playlists {
   last_update DateTime @default(now())
   uri         String
   active      Boolean  @default(true)
-  users       users    @relation(fields: [playlistid], references: [userid])
+  users       users    @relation(fields: [userid], references: [userid])
 }
