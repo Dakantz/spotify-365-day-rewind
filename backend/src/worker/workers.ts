@@ -164,7 +164,7 @@ export class UserWorker {
             " from",
             after,
             " got ",
-            recently_played.length,
+            recently_played.items.length,
             " songs!"
           );
           await this.addPlayed(recently_played.items, helper, job.data.userId);
