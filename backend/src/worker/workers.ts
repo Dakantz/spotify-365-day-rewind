@@ -172,6 +172,7 @@ export class UserWorker {
           throw new Error("Failed to find user??");
         }
       }
+      console.log("Sync done!", user?.userid);
     } catch (e) {
       console.error(
         "Sync failed for user",
