@@ -120,71 +120,89 @@ export class UserWorker {
     }
   }
   async processSync(job: Job<SyncPlaysJob>) {
-    let user = await this.db.users.findFirst({
-      where: {
-        userid: job.data.userId,
-      },
-    });
-    if (user) {
-      console.log(
-        "Starting sync of",
-        job.data.userId,
-        "on",
-        new Date().toISOString()
-      );
-      let lastPlay = await this.db.$queryRaw(
-        `SELECT max(time) FROM plays as p WHERE p.userId=${job.data.userId}`
-      );
-      let after = null;
-      if (lastPlay.length != 0) {
-        let timestamp = new Date(lastPlay[0].max);
-        after = timestamp.getTime();
-      }
-      let query = { after: undefined };
-      if (after) {
-        query.after = after as any;
-      } else {
-        delete query.after;
-      }
+    try {
       let user = await this.db.users.findFirst({
         where: {
           userid: job.data.userId,
         },
       });
       if (user) {
-        let spotify = new SpotifyClient(user.token);
-        let helper = new SpotifySyncHelper(this.db, user.token);
-        let recently_played = await spotify.recentListened(query);
-        this.addPlayed(recently_played.items, helper, job.data.userId);
+        console.log(
+          "Starting sync of",
+          job.data.userId,
+          "on",
+          new Date().toISOString()
+        );
+        let lastPlay = await this.db.$queryRaw(
+          `SELECT max(time) FROM plays as p WHERE p.userId=${job.data.userId}`
+        );
+        let after = null;
+        if (lastPlay.length != 0) {
+          let timestamp = new Date(lastPlay[0].max);
+          after = timestamp.getTime();
+        }
+        let query = { after: undefined };
+        if (after) {
+          query.after = after as any;
+        } else {
+          delete query.after;
+        }
+        let user = await this.db.users.findFirst({
+          where: {
+            userid: job.data.userId,
+          },
+        });
+        if (user) {
+          let spotify = new SpotifyClient(user.token);
+          let helper = new SpotifySyncHelper(this.db, user.token);
+          let recently_played = await spotify.recentListened(query);
+          this.addPlayed(recently_played.items, helper, job.data.userId);
+        }
       }
+    } catch (e) {
+      console.error(
+        "Sync failed for user",
+        job.data.userId,
+        " reason:",
+        e.message
+      );
     }
   }
   async processRefresh(job: Job<RefreshTokenJob>) {
-    console.log(
-      "Starting refresh of",
-      job.data.userId,
-      "on",
-      new Date().toISOString()
-    );
-    let user = await this.db.users.findFirst({
-      where: {
-        userid: job.data.userId,
-      },
-    });
-    if (user) {
-      let spotify = new SpotifyTokenClient(
-        job.data.client_id,
-        job.data.client_secret
+    try {
+      console.log(
+        "Starting refresh of",
+        job.data.userId,
+        "on",
+        new Date().toISOString()
       );
-      let refresh = await spotify.refreshToken(user.refreshtoken);
-      await this.db.users.update({
-        data: {
-          token: refresh.access_token,
-        },
+      let user = await this.db.users.findFirst({
         where: {
           userid: job.data.userId,
         },
       });
+      if (user) {
+        let spotify = new SpotifyTokenClient(
+          job.data.client_id,
+          job.data.client_secret
+        );
+        let refresh = await spotify.refreshToken(user.refreshtoken);
+        await this.db.users.update({
+          data: {
+            token: refresh.access_token,
+          },
+          where: {
+            userid: job.data.userId,
+          },
+        });
+      }
+    } catch (e) {
+      console.error(
+        "Refresh failed for user",
+        job.data.userId,
+        " reason:",
+        e.message
+      );
     }
   }
   async processDeletion(job: Job<DeleteUserJob>) {
