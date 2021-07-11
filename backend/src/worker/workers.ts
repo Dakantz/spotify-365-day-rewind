@@ -155,7 +155,18 @@ export class UserWorker {
         if (user) {
           let spotify = new SpotifyClient(user.token);
           let helper = new SpotifySyncHelper(this.db, user.token);
+
           let recently_played = await spotify.recentListened(query);
+
+          console.log(
+            "Queried recently listened for user ",
+            job.data.userId,
+            " from",
+            after,
+            " got ",
+            recently_played.length,
+            " songs!"
+          );
           await this.addPlayed(recently_played.items, helper, job.data.userId);
         }
       }
