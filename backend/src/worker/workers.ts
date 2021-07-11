@@ -168,6 +168,8 @@ export class UserWorker {
             " songs!"
           );
           await this.addPlayed(recently_played.items, helper, job.data.userId);
+        } else {
+          throw new Error("Failed to find user??");
         }
       }
     } catch (e) {
