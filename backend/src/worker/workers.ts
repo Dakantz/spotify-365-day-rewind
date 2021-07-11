@@ -156,7 +156,7 @@ export class UserWorker {
           let spotify = new SpotifyClient(user.token);
           let helper = new SpotifySyncHelper(this.db, user.token);
           let recently_played = await spotify.recentListened(query);
-          this.addPlayed(recently_played.items, helper, job.data.userId);
+          await this.addPlayed(recently_played.items, helper, job.data.userId);
         }
       }
     } catch (e) {
