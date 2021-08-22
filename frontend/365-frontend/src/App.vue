@@ -12,6 +12,10 @@
       <v-btn v-if="loggedIn" text to="/global-stats" class="mr-2">
         <span >Global Stats</span>
       </v-btn>
+      <v-btn v-if="loggedIn" text to="/leaderboards" class="mr-2">
+        <span >Leaderboards</span>
+      </v-btn>
+
       <v-btn v-if="loggedIn" text to="/settings" class="mr-2">
         <span >Settings</span>
       </v-btn>

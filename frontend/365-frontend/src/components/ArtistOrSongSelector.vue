@@ -33,6 +33,9 @@ export default {
   },
   created() {
     this.value = JSON.parse(localStorage.getItem(this.storageId));
+    if (!this.value) {
+      this.value = this.items.find((i) => i.type == "artists");
+    }
   },
   data: () => {
     return {

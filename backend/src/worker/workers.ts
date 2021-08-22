@@ -136,7 +136,7 @@ export class UserWorker {
         let lastPlay = await this.db.$queryRaw(
           `SELECT max(time) FROM plays as p WHERE p.userId=${job.data.userId}`
         );
-        let after = null;
+        let after: number | undefined = undefined;
         if (lastPlay.length != 0) {
           let timestamp = new Date(lastPlay[0].max);
           after = timestamp.getTime();

@@ -54,16 +54,22 @@ export class SpotifyClient {
     return ids.reduce((prev, val) => prev + (prev.length ? "," : "") + val, "");
   }
   public async tracks(ids: string[]) {
-    return (await this.requestData("/tracks", { ids: this.toCSL(ids) })).data
-      .tracks;
+    if (ids.length > 0)
+      return (await this.requestData("/tracks", { ids: this.toCSL(ids) })).data
+        .tracks;
+    else return []
   }
   public async artists(ids: string[]) {
-    return (await this.requestData("/artists", { ids: this.toCSL(ids) })).data
-      .artists;
+    if (ids.length > 0)
+      return (await this.requestData("/artists", { ids: this.toCSL(ids) })).data
+        .artists;
+    else return []
   }
   public async features(ids: string[]) {
-    return (await this.requestData("/audio-features", { ids: this.toCSL(ids) }))
-      .data.audio_features;
+    if (ids.length > 0)
+      return (await this.requestData("/audio-features", { ids: this.toCSL(ids) }))
+        .data.audio_features;
+    else return []
   }
   public async album(id: string) {
     return (await this.requestData("/albums/" + id)).data;
@@ -138,7 +144,7 @@ export class SpotifyClient {
 export class SpotifyTokenClient {
   public baseUrl: string = "https://accounts.spotify.com/api/token";
 
-  constructor(public clientId: string, public clientSecret: string) {}
+  constructor(public clientId: string, public clientSecret: string) { }
   public async exchangeToken(code: string, redirect_uri: string) {
     let response = await axios.post(
       this.baseUrl,

@@ -4,6 +4,9 @@ import { contextFunc, createUser, SContext } from "./auth";
 import { resolvers } from "./resolver";
 import { join } from "path";
 (async () => {
+
+  process.on('uncaughtException', (err) => console.error(err))
+  process.on('unhandledRejection', (err) => console.error(err))
   let schema = await loadSchema(join(__dirname, "../../schema.graphql"), {
     loaders: [new GraphQLFileLoader()],
     resolvers,
@@ -20,7 +23,7 @@ import { join } from "path";
   });
   console.log(`Ready omn port ${port}`);
 })()
-  .then(() => {})
+  .then(() => { })
   .catch((e) => {
     console.error("Error:", e);
   });

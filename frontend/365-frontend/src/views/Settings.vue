@@ -5,6 +5,27 @@
     </div>
     <div class="settings_root" v-else>
       <div class="text-h2 ma-12">User Settings for {{ me.name }}</div>
+
+      <v-card class="ma-12">
+        <v-card-title> Site Settings</v-card-title>
+        <v-card-text>
+          <v-checkbox
+            class="ma-4"
+            label="Allow my profile to be public"
+            :input-value="me.publicDisplay"
+            @change="
+              function a(val) {
+                setPublicDisplay(!!val);
+              }
+            "
+          >
+          </v-checkbox>
+          <span color="lightgrey">
+            If enabled, your user profile will be shown in the leaderboard and
+            your statistics are publicly available</span
+          >
+        </v-card-text>
+      </v-card>
       <v-card class="ma-12">
         <v-card-title> Email Settings </v-card-title>
         <v-card-text>
@@ -118,10 +139,11 @@ export default {
       query: gql`
         query me {
           me {
-            ... on User {
+            ... on MeUser {
               name
               email
               reportIntervals
+              publicDisplay
             }
           }
         }
@@ -139,6 +161,33 @@ export default {
         this.me.reportIntervals.findIndex((s) => s.includes(scale)) != -1;
       console.log(val);
       return val;
+    },
+    async setPublicDisplay(val) {
+      console.log("Clicked setPublicDisplay", val);
+      let userData = await this.$apollo.mutate({
+        // Query
+        mutation: gql`
+          mutation setPublicDisplay($display: Boolean!) {
+            me {
+              setPublicDisplay(publicDisplay: $display) {
+                ... on SimpleMessage {
+                  message
+                }
+                ... on Error {
+                  message
+                }
+              }
+            }
+          }
+        `,
+        variables: {
+          display: val,
+        },
+        fetchPolicy: "no-cache",
+      });
+
+      this.$apollo.queries.me.refetch();
+      console.log(userData.data);
     },
     async updateReportInterval(scale, val) {
       console.log("Clicked", scale, val);

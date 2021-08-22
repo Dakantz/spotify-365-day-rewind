@@ -6,6 +6,7 @@ import Stats from '../views/Stats.vue'
 import GlobalStats from '../views/GlobalStats.vue'
 import Settings from '../views/Settings.vue'
 import PlaylistManager from '../views/PlaylistManager.vue'
+import Leaderboards from '../views/Leaderboards.vue'
 
 
 Vue.use(VueRouter)
@@ -35,6 +36,11 @@ const routes = [
     path: '/playlist-manager',
     name: 'PlaylistManager',
     component: PlaylistManager
+  },
+  {
+    path: '/leaderboards',
+    name: 'Leaderboards',
+    component: Leaderboards
   },
   {
     path: '/settings',

@@ -9,7 +9,7 @@
       <artist-or-song-selector
         v-model="mode"
         :id="`top:${id}`"
-        :name="`Time`"
+        :name="`Top`"
         :hint="`Artists or Songs`"
       />
       <time-frame-selector
@@ -29,7 +29,7 @@
         <template v-for="(stat, index) in topStats">
           <v-list-item :key="stat.title">
             <v-list-item-avatar>
-              <v-img :src="stat.item.cover[0].url"></v-img>
+              <v-img :src="stat.item.cover[2].url"></v-img>
             </v-list-item-avatar>
 
             <v-list-item-content>

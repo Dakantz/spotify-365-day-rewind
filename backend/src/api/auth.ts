@@ -26,7 +26,7 @@ const connection = new IORedis({
 });
 
 export class UserTokenData {
-  constructor(public uid: number, public email: string, public name: string) {}
+  constructor(public uid: number, public email: string, public name: string) { }
 }
 export class SContext {
   constructor(
@@ -36,7 +36,7 @@ export class SContext {
     public token: string,
     public user?: UserTokenData,
     public spotifyToken?: string
-  ) {}
+  ) { }
 }
 export async function contextFunc(context: ExpressContext): Promise<SContext> {
   let auth_header = context.req.headers.authorization;
@@ -151,7 +151,8 @@ export async function createUser(
       me.id,
       data.name,
       data.email,
-      respone.access_token
+      respone.access_token,
+      false
     )
   );
 }

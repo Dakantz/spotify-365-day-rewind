@@ -7,6 +7,7 @@ import {
   GeneralUser,
   GQLArtist,
   GQLError,
+  GQLImage,
   GQLMessage,
   GQLMeUser,
   GQLPlaylist,
@@ -160,7 +161,8 @@ export const resolvers = {
             user.uri.split(":")[2],
             user.name,
             user.email,
-            user.token
+            user.token,
+            user.allow_public_display
           );
         } else {
           return new GQLError("User not in system!");
@@ -185,8 +187,10 @@ export const resolvers = {
             from,
             context.spotifyToken,
             take,
-            skip
+            skip,
+            args.artistId
           ),
+          __typename: "LeaderboardEntries"
         };
       } else {
         return new GQLError("Can't display leaderboard if not logged idn!");
@@ -209,7 +213,7 @@ export const resolvers = {
           })
         ).map((user) => {
           return new GQLPublicUser(
-            user.uri.split(":")[1],
+            user.uri.split(":")[2],
             user.name,
             context.spotifyToken as string
           );
@@ -218,6 +222,33 @@ export const resolvers = {
         return new GQLError("Can't display leaderboard if not logged idn!");
       }
     },
+    findArtist: async (
+      parent: any,
+      args: { [key: string]: any },
+      context: SContext
+    ) => {
+      if (context.spotifyToken) {
+        let artists = await context.db.artists.findMany({
+          where: {
+            name: {
+              contains: args.query,
+              mode: 'insensitive'
+            },
+
+          },
+          skip: args.skip || 0,
+          take: args.take || 25
+
+        })
+
+        let spotifyClient = new SpotifyClient(context.spotifyToken)
+        let spotify_artists = await spotifyClient.artists(artists.map(a => a.uri.split(":")[2]))
+
+        return { artists: spotify_artists.map((a: any) => new GQLArtist(a.id, a.name, a.images.map((img: any) => new GQLImage(img.url, img.height, img.width)))), __typename: "Artists" }
+      } else {
+        return new GQLError("Can't load artists if not logged idn!");
+      }
+    }
   },
   Mutation: {
     me: (info: any, args: { [key: string]: any }, context: SContext) => {
@@ -244,35 +275,26 @@ export const resolvers = {
             context: SContext,
             info: any
           ) {
+          },
+          async setPublicDisplay(
+            args: { [key: string]: string | boolean },
+            context: SContext,
+            info: any
+          ) {
             if (context.user) {
               try {
-                switch (args.scale) {
-                  case "MONTH":
-                    await context.db.users.update({
-                      where: { userid: context.user.uid },
-                      data: {
-                        report_monthly:
-                          (args.val as boolean) || args.val == "true",
-                      },
-                    });
-                    break;
-                  case "WEEK":
-                    await context.db.users.update({
-                      where: { userid: context.user.uid },
-                      data: {
-                        report_weekly:
-                          (args.val as boolean) || args.val == "true",
-                      },
-                    });
-                    break;
-                  default:
-                    return new GQLError(
-                      "Other granularity currently unsupported!"
-                    );
-                }
+                await context.db.users.update({
+                  where: {
+                    userid: context.user.uid
+                  },
+                  data: {
+                    allow_public_display: args.publicDisplay as boolean
+                  }
+                })
                 return new GQLMessage("Success!");
               } catch (e) {
-                console.error("Error during update on report", e);
+                console.error("Error during update on user", e);
+                return new GQLMessage("Success!");
               }
             } else {
               return new GQLError("Must be logged in!");

@@ -171,6 +171,7 @@ type MeUser implements GeneralUser {
   ): [Song]!
   
   playlists:[Playlist]!
+  publicDisplay:Boolean!
 }
 
 type AuthentificationResponse {
@@ -191,12 +192,16 @@ type LeaderboardEntry {
 type LeaderboardEntries {
   entries: [LeaderboardEntry]!
 }
+type Artists {
+  artists: [Artist]!
+}
 union UserOrError = MeUser | Error
 union AuthentificationResponseOrError = AuthentificationResponse | Error
 union SimpleResponse = SimpleMessage | Error
 
 union PublicUsersOrError = PublicUserList | Error
 union LeaderboardEntriesOrError = LeaderboardEntries | Error
+union ArtistOrError = Artists | Error
 
 type PlaylistCreationResponse {
   success: Boolean!
@@ -216,7 +221,7 @@ type UserMutations {
   delete: SimpleResponse!
   triggerExport: SimpleResponse!
   setReportInterval(scale: Scale!, val: Boolean!): SimpleResponse!
-
+  setPublicDisplay(publicDisplay:Boolean!):SimpleResponse!
   createPlaylist(params: CreatePlaylist!): PlaylistCreationResponse!
 }
 
@@ -233,8 +238,16 @@ type Query {
   findUser(query: String!): PublicUsersOrError
   leaderboard(
     from: String!
+    artistId: String
     to: String
     take: Int
     skip: Int
+
   ): LeaderboardEntriesOrError
+  findArtist(
+    query: String!
+    take: Int
+    skip: Int
+    
+  ): ArtistOrError
 }

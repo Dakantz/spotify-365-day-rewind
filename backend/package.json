@@ -11,12 +11,11 @@
   "author": "dakantz",
   "license": "ISC",
   "devDependencies": {
-    "@prisma/cli": "^2.13.1",
     "@types/jsonwebtoken": "^8.5.0",
     "@types/type-is": "^1.6.3"
   },
   "dependencies": {
-    "@prisma/client": "^2.13.1",
+    "@prisma/client": "^2.29.1",
     "@types/archiver": "^5.1.0",
     "@types/bull": "^3.14.4",
     "@types/mustache": "^4.1.1",

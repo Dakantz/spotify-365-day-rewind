@@ -1,4 +1,4 @@
-import { JsonObject, PrismaClient } from "@prisma/client";
+import { PrismaClient } from "@prisma/client";
 import { Job } from "bullmq";
 import moment from "moment";
 import { queueMap } from ".";
@@ -62,7 +62,7 @@ export class GQLPlaylistCreationResponse {
     public message: string,
     id?: string,
     songs?: GQLSSong[]
-  ) {}
+  ) { }
 }
 export class PlaylistCreator {
   private stats: Stats;
@@ -242,7 +242,7 @@ export class PlaylistCreator {
         );
         let playlist_db = await this.db.playlists.create({
           data: {
-            parameters: (params as unknown) as JsonObject,
+            parameters: (params as unknown) as any,
             uri: playlist.uri,
             active: true,
             users: {

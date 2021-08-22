@@ -12,20 +12,20 @@ export class GQLError {
   get __typename() {
     return "Error";
   }
-  constructor(public message: string) {}
+  constructor(public message: string) { }
 }
 export class GQLMessage {
   get __typename() {
     return "SimpleMessage";
   }
-  constructor(public message: string) {}
+  constructor(public message: string) { }
 }
 export abstract class GeneralUser {
   constructor(
     public id: string,
     public name: string,
     public auth_token: string
-  ) {}
+  ) { }
 
   async image_url() {
     let spotify = new SpotifyClient(this.auth_token);
@@ -68,7 +68,8 @@ export class GQLMeUser extends GeneralUser {
     public id: string,
     public name: string,
     public email: string,
-    public token: string
+    public token: string,
+    public publicDisplay: boolean
   ) {
     super(id, name, token);
   }
@@ -89,7 +90,7 @@ export class GQLAuthentificationResponse {
   get __typename() {
     return "AuthentificationResponse";
   }
-  constructor(public token: string, public user: GQLMeUser) {}
+  constructor(public token: string, public user: GQLMeUser) { }
 }
 
 export type ScaleSteps = "HOUR" | "DAY" | "WEEK" | "MONTH" | "DOW";
@@ -105,7 +106,7 @@ export class GQLStatPoint {
     public from?: string,
     public to?: string,
     public userId?: number
-  ) {}
+  ) { }
 }
 
 export class GQLStats {
@@ -119,7 +120,7 @@ export class GQLStats {
     public scaletype: ScaleSteps,
     public wantedSteps: number,
     public userId?: number
-  ) {}
+  ) { }
 }
 export class GQLImage {
   get __typename() {
@@ -129,7 +130,7 @@ export class GQLImage {
     public url: string,
     public height: number,
     public width: number
-  ) {}
+  ) { }
 }
 export class GQLArtist {
   get __typename() {
@@ -139,7 +140,7 @@ export class GQLArtist {
     public id: string,
     public name: string,
     public cover: GQLImage[]
-  ) {}
+  ) { }
 }
 
 export class GQLArtistStats {
@@ -150,7 +151,7 @@ export class GQLArtistStats {
     public artist: GQLArtist,
     public minutes: number,
     public plays: number
-  ) {}
+  ) { }
 }
 
 export class GQLSSong {
@@ -162,7 +163,7 @@ export class GQLSSong {
     public name: string,
     public cover: GQLImage[],
     public uri: string
-  ) {}
+  ) { }
 }
 
 export class GQLSongStats {
@@ -173,7 +174,7 @@ export class GQLSongStats {
     public song: GQLSSong,
     public minutes: number,
     public plays: number
-  ) {}
+  ) { }
 }
 
 export class GQLLeaderboardEntry {
@@ -184,7 +185,7 @@ export class GQLLeaderboardEntry {
     public user: GQLPublicUser,
     public minutes: number,
     public plays: number
-  ) {}
+  ) { }
 }
 export class GQLPlaylist implements CreatePlaylistParams {
   get __typename() {
@@ -201,7 +202,7 @@ export class GQLPlaylist implements CreatePlaylistParams {
     public timespan_ms: number,
     public source: PlaylistSource,
     public description: string
-  ) {}
+  ) { }
   async songs(args: any, context: SContext) {
     if (this.user) {
       let spotify = new SpotifyClient(this.user.auth_token);

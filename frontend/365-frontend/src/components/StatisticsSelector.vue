@@ -32,6 +32,9 @@ export default {
   },
   created() {
     this.value = localStorage.getItem(this.storageId);
+    if (!this.value) {
+      this.value = "minutes";
+    }
   },
   data: () => {
     return {
