@@ -1,4 +1,4 @@
-FROM node:12 AS backend_base
+FROM node:16 AS backend_base
 
 ENV PORT 80
 
