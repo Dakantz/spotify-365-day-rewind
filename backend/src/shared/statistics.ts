@@ -1,4 +1,4 @@
-import { PrismaClient } from "@prisma/client";
+import { PrismaClient, users } from "@prisma/client";
 import { SpotifyClient } from ".";
 import {
   GQLArtist,
@@ -205,7 +205,7 @@ OFFSET ${skip}`;
   ): Promise<GQLLeaderboardEntry[]> {
     let leaders: any[];
     if (artistId) {
-      let artistUri=`spotify:artist:${artistId}`
+      let artistUri = `spotify:artist:${artistId}`
       leaders = await this.db.$queryRaw`
       SELECT u.userid as id,
       count(p.playid) as plays,
@@ -241,8 +241,8 @@ OFFSET ${skip}`;
       where: { userid: { in: leaders.map((leader: any) => leader.id) } },
     });
 
-    let entries: GQLLeaderboardEntry[] = users.map(user => {
-      let entry = leaders.find(l => l.id == user.userid)
+    let entries: GQLLeaderboardEntry[] = leaders.map(entry => {
+      let user = users.find(u => u.userid == entry.id) as users
       return new GQLLeaderboardEntry(
         new GQLPublicUser(user.uri.split(":")[2], user.name, token),
         entry.playtime,
