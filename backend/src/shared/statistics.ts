@@ -144,7 +144,7 @@ ${from
         : `plays.time <'${to.toISOString()}'`
       }
 GROUP BY a.artistid
-ORDER BY plays DESC, playtime DESC
+ORDER BY  playtime DESC, plays DESC
 LIMIT ${take}
 OFFSET ${skip}`);
     let artists = await spotify.artists(
@@ -179,7 +179,7 @@ ${from
         : `plays.time <'${to.toISOString()}'`
       }
 GROUP BY s.songid
-ORDER BY plays DESC, playtime DESC
+ORDER BY  playtime DESC, plays DESC
 LIMIT ${take}
 OFFSET ${skip}`;
     let data = await this.db.$queryRaw(query);
@@ -217,7 +217,7 @@ OFFSET ${skip}`;
       WHERE  p."time" BETWEEN ${from}  AND ${to}
     AND u.allow_public_display IS TRUE AND a.uri=${artistUri}
   GROUP BY u.userid
-  ORDER BY playtime DESC
+  ORDER BY playtime DESC, plays DESC
   LIMIT ${take}
   OFFSET ${skip}`;
     } else {
@@ -232,7 +232,7 @@ OFFSET ${skip}`;
     WHERE  p."time" BETWEEN ${from}  AND ${to}
     AND u.allow_public_display IS TRUE 
   GROUP BY u.userid
-  ORDER BY playtime DESC
+  ORDER BY playtime DESC, plays DESC
   LIMIT ${take}
   OFFSET ${skip}`;
     }
