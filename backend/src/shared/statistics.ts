@@ -4,6 +4,7 @@ import {
   GQLArtist,
   GQLArtistStats,
   GQLLeaderboardEntry,
+  GQLMeUser,
   GQLPublicUser,
   GQLSongStats,
   GQLSSong,
@@ -14,7 +15,41 @@ import {
 
 export class Stats {
   constructor(private db: PrismaClient) { }
-
+  public async songsFromUris(uris: string[], spotify: SpotifyClient): Promise<GQLSSong[]> {
+    if (uris.length > 50) {
+      uris.length = 50;
+    }
+    let songs =
+      uris.length > 0
+        ? await spotify.tracks(uris.map((p: any) => p.split(":")[2]))
+        : [];
+    return songs.map((song: any, index: number) => {
+      return new GQLSSong(song.id, song.name, song.album.images, song.uri)
+    });
+  }
+  public async recentlyPlayedSongs(take: number, skip: number, user: GQLMeUser, userId: number) {
+    let intervals: string[] = [];
+    let plays = await this.db.plays.findMany({
+      where: {
+        userid: userId,
+      },
+      skip: skip,
+      take: take > 50 ? 50 : take,
+      orderBy: {
+        time: "desc"
+      },
+      include: {
+        songs: {
+          select: {
+            uri: true
+          }
+        }
+      }
+    });
+    let client = new SpotifyClient(user.auth_token)
+    let songs = await this.songsFromUris(plays.map(p => p.songs.uri), client);
+    return songs;
+  }
   private msFromScale(scale: ScaleSteps) {
     let scaleSize = 0;
     switch (scale) {

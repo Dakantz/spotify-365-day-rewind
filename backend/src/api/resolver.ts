@@ -136,6 +136,14 @@ export const resolvers = {
       }
       return intervals;
     },
+    async recentlyPlayedSongs(
+      parent: GQLMeUser,
+      args: { [key: string]: any },
+      context: SContext
+    ) {
+      let stats = new Stats(context.db);
+      return await stats.recentlyPlayedSongs(args.take, args.skip, parent, context.user?.uid as number)
+    }
   },
   Query: {
     clientToken: (

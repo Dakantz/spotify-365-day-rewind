@@ -4,6 +4,7 @@ services:
     image: redis
     ports:
       - "6380:6379"
+    network_mode: "bridge"
   db:
     image: postgres
     environment:
@@ -14,6 +15,7 @@ services:
       - "5433:5432"
     volumes:
       - pgdata:/var/lib/postgresql/data
+    network_mode: "bridge"
   pgadmin:
     image: dpage/pgadmin4:4.18
     restart: always
@@ -27,6 +29,7 @@ services:
       - pgadmin-data:/var/lib/pgadmin
     links:
       - "db:pgsql-server"
+    network_mode: "bridge"
 volumes: 
   pgdata: {}
   pgadmin-data: {}

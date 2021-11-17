@@ -12,10 +12,11 @@
   "license": "ISC",
   "devDependencies": {
     "@types/jsonwebtoken": "^8.5.0",
-    "@types/type-is": "^1.6.3"
+    "@types/type-is": "^1.6.3",
+    "prisma": "^2.30.3"
   },
   "dependencies": {
-    "@prisma/client": "^2.29.1",
+    "@prisma/client": "^2.30.3",
     "@types/archiver": "^5.1.0",
     "@types/bull": "^3.14.4",
     "@types/mustache": "^4.1.1",

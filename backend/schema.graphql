@@ -116,6 +116,8 @@ interface GeneralUser {
     to: String
     global: Boolean
   ): [ArtistInfo]!
+  recentlyPlayedSongs( take: Int
+    skip: Int): [Song]!
 }
 type PublicUser implements GeneralUser {
   id: String!
@@ -135,6 +137,8 @@ type PublicUser implements GeneralUser {
     to: String
     global: Boolean
   ): [ArtistInfo]!
+  recentlyPlayedSongs( take: Int
+    skip: Int): [Song]!
 }
 type MeUser implements GeneralUser {
   id: String!
@@ -172,6 +176,9 @@ type MeUser implements GeneralUser {
   
   playlists:[Playlist]!
   publicDisplay:Boolean!
+
+  recentlyPlayedSongs( take: Int
+    skip: Int): [Song]!
 }
 
 type AuthentificationResponse {
