@@ -54,7 +54,7 @@ export default {
   },
 
   created() {
-    loadMore();
+    this.loadMore();
   },
 
   methods: {

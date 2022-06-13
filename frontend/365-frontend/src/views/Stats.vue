@@ -15,6 +15,11 @@
           <top-widget class="widget" :id="`top-1`" />
         </v-col>
       </v-row>
+      <v-row>
+        <v-col>
+          <recently-widget class="widget" :id="`top-1`" />
+        </v-col>
+      </v-row>
     </v-container>
   </div>
 </template>
@@ -23,12 +28,14 @@
 import ChartWidget from "../components/ChartWidget.vue";
 import TopWidget from "../components/TopWidget.vue";
 import TotalWidget from "../components/TotalWidget.vue";
+import RecentlyWidget from "../components/RecentlyWidget.vue";
 import gql from "graphql-tag";
 export default {
   components: {
     TotalWidget,
     ChartWidget,
     TopWidget,
+    RecentlyWidget,
   },
   apollo: {
     me: {

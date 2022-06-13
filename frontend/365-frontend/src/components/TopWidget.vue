@@ -2,7 +2,8 @@
   <v-card>
     <v-card-title
       ><span v-if="global" class="mr-2">Our</span
-      ><span v-else class="mr-2">Your</span> top <span v-if="mode" class="ml-2">{{ mode.type }}</span
+      ><span v-else class="mr-2">Your</span> top
+      <span v-if="mode" class="ml-2">{{ mode.type }}</span
       ><span v-else>...</span>
       <v-spacer></v-spacer>
 
@@ -21,11 +22,13 @@
     </v-card-title>
 
     <v-card-text>
-      <v-progress-circular
-        v-if="$apollo.queries.topStats.loading"
-        indeterminate
-      ></v-progress-circular>
-      <v-list v-else three-line>
+      <v-list three-line>
+        <v-list-item>
+          <v-progress-linear
+            v-if="$apollo.queries.topStats.loading"
+            indeterminate
+          ></v-progress-linear>
+        </v-list-item>
         <template v-for="(stat, index) in topStats">
           <v-list-item :key="stat.title">
             <v-list-item-avatar>
@@ -41,10 +44,13 @@
             </v-list-item-content>
           </v-list-item>
         </template>
+        <v-list-item key="load_more">
+          <v-list-item-content>
+            <v-btn icon @click="showMore()"><v-icon>mdi-plus</v-icon></v-btn>
+          </v-list-item-content>
+        </v-list-item>
       </v-list>
     </v-card-text>
-    <v-card-actions>
-    </v-card-actions>
   </v-card>
 </template>
 
@@ -57,21 +63,41 @@ export default {
   components: { TimeFrameSelector, ArtistOrSongSelector },
   props: {
     id: String,
-    global:{
-      type:Boolean,
-      default:false
-    }
+    global: {
+      type: Boolean,
+      default: false,
+    },
   },
   data: () => {
     return {
       timeframe: null,
       mode: null,
+      offset: 0,
     };
   },
-
+  watch: {
+    timeframe() {
+      this.offset = 0;
+    },
+    mode() {
+      this.offset = 0;
+    },
+  },
   computed: {
     selectedStat() {
       return this.totalStats[this.statistics];
+    },
+    queryVariables() {
+      let from_maybe = this.timeframe
+        ? new Date(Date.now() - this.timeframe.interval).toISOString()
+        : null;
+      return {
+        from: from_maybe ? from_maybe : new Date().toISOString(),
+        to: new Date().toISOString(),
+        take: 10,
+        global: this.global,
+        skip: 0,
+      };
     },
   },
   apollo: {
@@ -115,15 +141,7 @@ export default {
       `;
       },
       variables() {
-        let from_maybe = this.timeframe
-          ? new Date(Date.now() - this.timeframe.interval).toISOString()
-          : null;
-        return {
-          from: from_maybe ? from_maybe : new Date().toISOString(),
-          to: new Date().toISOString(),
-          take: 10,
-          global: this.global,
-        };
+        return this.queryVariables;
       },
       skip() {
         return !(this.mode && this.timeframe);
@@ -144,7 +162,32 @@ export default {
       },
     },
   },
+
+  methods: {
+    showMore() {
+      this.skip += 10;
+      let local_vars = this.variables;
+      local_vars.skip = this.skip;
+      // Fetch more data and transform the original result
+      this.$apollo.queries.tagsPage.topStats({
+        // New variables
+        variables: local_vars,
+        // Transform the previous result with new data
+        updateQuery: (previousResult, { fetchMoreResult }) => {
+          const newTags = fetchMoreResult.tagsPage.tags;
+          console.log(
+            "prev result:",
+            previousResult,
+            "new res:",
+            fetchMoreResult
+          );
+          return previousResult;
+        },
+      });
+    },
+  },
 };
 </script>
 
-<style></style>
+<style>
+</style>

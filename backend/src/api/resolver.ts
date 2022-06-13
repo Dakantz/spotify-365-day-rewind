@@ -1,5 +1,4 @@
 import { users } from "@prisma/client";
-import { IResolvers } from "graphql-tools";
 import { idFromUri, SpotifyClient } from "../shared";
 import { DeleteUserJob, ExportMeJob } from "../shared/types";
 import { createUser, SContext } from "./auth";
