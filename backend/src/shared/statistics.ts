@@ -50,7 +50,7 @@ export class Stats {
         let songs = await this.songsFromUris(plays.map(p => p.songs.uri), client);
         return songs;
     }
-    private msFromScale(scale: ScaleSteps) {
+    public static msFromScale(scale: ScaleSteps) {
         let scaleSize = 0;
         switch (scale) {
             case "HOUR":
@@ -69,7 +69,7 @@ export class Stats {
         }
         return scaleSize;
     }
-    private msFromSteps(scale: ScaleSteps, wantedSteps: number) {
+    public static msFromSteps(scale: ScaleSteps, wantedSteps: number) {
         return wantedSteps * this.msFromScale(scale);
     }
     public async stats(
@@ -86,7 +86,7 @@ export class Stats {
             fromFixed = from;
         } else {
             fromFixed = new Date(
-                toFixed.getTime() - this.msFromSteps(scale, wantedSteps)
+                toFixed.getTime() - Stats.msFromSteps(scale, wantedSteps)
             );
         }
         return new GQLStats(
@@ -106,13 +106,13 @@ export class Stats {
 		count(p.playid) as plays,
        sum(s.duration_ms) / (1000 * 60) as playtime,
        timesub.generate_series as time_from,
-       timesub.generate_series +  ${'1 '+parent.scale.toLowerCase()}::TEXT::INTERVAL  as time_to
+       timesub.generate_series +  ${'1 ' + parent.scale.toLowerCase()}::TEXT::INTERVAL  as time_to
        
        FROM (SELECT *
       FROM generate_series(DATE_TRUNC(${parent.scale.toLowerCase()}, ${parent.from}::TEXT::TIMESTAMP),
-      DATE_TRUNC(${parent.scale.toLowerCase()},   ${parent.to}::TEXT::TIMESTAMP),  ${'1 ' +parent.scale.toLowerCase()}::TEXT::INTERVAL  )) as timesub
+      DATE_TRUNC(${parent.scale.toLowerCase()},   ${parent.to}::TEXT::TIMESTAMP),  ${'1 ' + parent.scale.toLowerCase()}::TEXT::INTERVAL  )) as timesub
 
-    LEFT OUTER JOIN plays p on p.time BETWEEN timesub.generate_series AND timesub.generate_series + ${'1 '+parent.scale.toLowerCase()}::TEXT::INTERVAL  ${parent.userId ? Prisma.sql`AND p.userid = ${parent.userId}` : Prisma.empty
+    LEFT OUTER JOIN plays p on p.time BETWEEN timesub.generate_series AND timesub.generate_series + ${'1 ' + parent.scale.toLowerCase()}::TEXT::INTERVAL  ${parent.userId ? Prisma.sql`AND p.userid = ${parent.userId}` : Prisma.empty
                 }
     LEFT OUTER JOIN songs s on s.songid = p.songid
 GROUP BY timesub.generate_series
@@ -222,7 +222,7 @@ WHERE ${parent.userId ? Prisma.sql`userid = ${parent.userId} AND` : Prisma.empty
             data = await this.db.$queryRaw`
         SELECT count(*) as plays, sum(s.duration_ms)/(1000*60) as playtime, s.name, s.uri FROM plays 
         LEFT JOIN songs s on s.songid = plays.songid
-    WHERE ${userId ? "userid = " + userId + " AND" : ""}
+    WHERE ${userId ? Prisma.sql`userid = ${userId} AND` : Prisma.empty}
     ${from
                     ? Prisma.sql`plays.time BETWEEN ${from} AND ${to}`
                     : Prisma.sql`plays.time <${to}`

@@ -67,6 +67,14 @@
                 ></refresh-selector>
               </v-col>
             </v-row>
+            <v-row v-if="mode=='COLLABORATIVE'">
+              <v-col>
+                <user-search
+                  v-model="other_users"
+                  :id="'user-search-playlist'"
+                ></user-search>
+              </v-col>
+            </v-row>
           </v-container>
         </v-card-text>
         <v-card-actions>
@@ -122,11 +130,13 @@ import { onLogout } from "../plugins/vue-apollo";
 import RefreshSelector from "../components/RefreshSelector";
 import TimeSelect from "../components/TimeFrameSelector";
 import PlaylistPreview from "../components/PlaylistPreview.vue";
+import UserSearch from "../components/UserSearch.vue";
 export default {
   components: {
     TimeSelect,
     RefreshSelector,
     PlaylistPreview,
+    UserSearch,
   },
   methods: {
     refreshPlaylists() {
@@ -155,6 +165,8 @@ export default {
           : 1000 * 60 * 60 * 24 * 7, //def: 1 week
         name: this.name,
         source: this.source,
+        with_user: this.other_users,
+        skip: this.skip,
       };
     },
   },
@@ -183,10 +195,13 @@ export default {
           name: "Top",
           type: "TOP",
         },
-
         {
           name: "Recommendations",
           type: "RECOMMENDATIONS",
+        },
+        {
+          name: "Collaborative",
+          type: "COLLABORATIVE",
         },
       ],
       source: "PERSONAL",
@@ -204,6 +219,7 @@ export default {
       refreshInterval: null,
       timeframeSelection: null,
       name: "365-rewind Playlist",
+      other_users: [],
     };
   },
   apollo: {

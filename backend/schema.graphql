@@ -223,6 +223,7 @@ input CreatePlaylist {
   timespan_ms: Float!
   name: String!
   source: PlaylistSource! = PERSONAL
+  with_user: [String]
 }
 type UserMutations {
   delete: SimpleResponse!

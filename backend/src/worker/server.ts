@@ -83,7 +83,7 @@ import { UserWorker } from "./workers";
 
     worker.workers = workers;
 
-    if (!(await connection.get("jobs-initialized"))) {
+    if (true) {
         /*
       Re-adding all jobs
       */

@@ -16,7 +16,8 @@ CREATE TABLE Users(
     report_weekly BOOLEAN DEFAULT(FALSE) NOT NULL,
     report_monthly BOOLEAN DEFAULT(FALSE) NOT NULL,
     allow_public_display BOOLEAN NOT NULL DEFAULT false,
-    uri VARCHAR(256) NOT NULL
+    uri VARCHAR(256) NOT NULL,
+    joined_on TIMESTAMP NOT NULL DEFAULT now()
 );
 CREATE TABLE Genres(
     gId SERIAL PRIMARY KEY,

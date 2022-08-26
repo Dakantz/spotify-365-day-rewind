@@ -25,7 +25,7 @@ export class SpotifyClient {
           data,
           headers: this.headers,
         });
-      } catch (error) {
+      } catch (error:any) {
         if (error.response && error.response.status == 429) {
           await new Promise((resolve) =>
             setTimeout(
@@ -129,6 +129,14 @@ export class SpotifyClient {
         seed_artists: this.toCSL(artist_ids),
         seed_tracks: this.toCSL(song_ids),
         seed_genres: ",",
+      })
+    ).data;
+  }
+  public async likedSongs(offset=0, limit=50) {
+    return (
+      await this.requestData("/me/tracks", {
+        offset: offset,
+        limit: limit,
       })
     ).data;
   }

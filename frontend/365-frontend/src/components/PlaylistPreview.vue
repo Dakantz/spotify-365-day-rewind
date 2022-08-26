@@ -59,7 +59,7 @@ export default {
       let creationResult = await this.$apollo.mutate({
         // Query
         mutation: gql`
-          mutation($input: CreatePlaylist!) {
+          mutation ($input: CreatePlaylist!) {
             me {
               createPlaylist(params: $input) {
                 success
@@ -99,6 +99,9 @@ export default {
       },
       update(value) {
         return value.me.previewPlaylist;
+      },
+      skip() {
+        return !this.active;
       },
       query: gql`
         query preview($input: CreatePlaylist!) {

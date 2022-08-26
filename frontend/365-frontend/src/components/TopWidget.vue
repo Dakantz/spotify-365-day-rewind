@@ -46,7 +46,9 @@
         </template>
         <v-list-item key="load_more">
           <v-list-item-content>
-            <v-btn icon @click="showMore()"><v-icon>mdi-plus</v-icon></v-btn>
+            <v-btn icon @click="showMore()" block :loading="loadingMore" rounded
+              ><v-icon>mdi-plus</v-icon></v-btn
+            >
           </v-list-item-content>
         </v-list-item>
       </v-list>
@@ -72,7 +74,9 @@ export default {
     return {
       timeframe: null,
       mode: null,
-      offset: 0,
+      skip: 0,
+      pageSize: 20,
+      loadingMore: false,
     };
   },
   watch: {
@@ -94,7 +98,7 @@ export default {
       return {
         from: from_maybe ? from_maybe : new Date().toISOString(),
         to: new Date().toISOString(),
-        take: 10,
+        take: this.pageSize,
         global: this.global,
         skip: 0,
       };
@@ -104,7 +108,7 @@ export default {
     topStats: {
       query() {
         return gql`
-        query topStats($from: String, $to: String, $take:Int, $global:Boolean) {
+        query topStats($from: String, $to: String, $take:Int, $skip:Int, $global:Boolean) {
           me {
             ... on MeUser {
               name
@@ -112,7 +116,7 @@ export default {
               ${
                 this.mode.type == "songs"
                   ? `
-              mostPlayedSongs(from: $from, to: $to, take:$take, global: $global){
+              mostPlayedSongs(from: $from, to: $to, skip:$skip, take:$take, global: $global){
                 plays
                 minutes
                 song {
@@ -164,26 +168,49 @@ export default {
   },
 
   methods: {
-    showMore() {
-      this.skip += 10;
-      let local_vars = this.variables;
+    mapData(rawData) {
+      let mapped =
+        this.mode.type == "artists"
+          ? rawData.me.mostPlayedArtists.map((artist) => {
+              artist.item = artist.artist;
+              return artist;
+            })
+          : rawData.me.mostPlayedSongs.map((song) => {
+              song.item = song.song;
+              return song;
+            });
+      return mapped;
+    },
+    async showMore() {
+      this.skip += this.pageSize;
+      let local_vars = JSON.parse(JSON.stringify(this.queryVariables));
       local_vars.skip = this.skip;
-      // Fetch more data and transform the original result
-      this.$apollo.queries.tagsPage.topStats({
-        // New variables
-        variables: local_vars,
-        // Transform the previous result with new data
-        updateQuery: (previousResult, { fetchMoreResult }) => {
-          const newTags = fetchMoreResult.tagsPage.tags;
-          console.log(
-            "prev result:",
-            previousResult,
-            "new res:",
-            fetchMoreResult
-          );
-          return previousResult;
-        },
-      });
+      this.loadingMore = true;
+      try {
+        // Fetch more data and transform the original result
+        await this.$apollo.queries.topStats.fetchMore({
+          // New variables
+          variables: local_vars,
+          // Transform the previous result with new data
+          updateQuery: (previousResult, { fetchMoreResult }) => {
+            if (this.mode.type == "artists") {
+              previousResult.me.mostPlayedArtists = [
+                ...previousResult.me.mostPlayedArtists,
+                ...fetchMoreResult.me.mostPlayedArtists,
+              ];
+            } else {
+              previousResult.me.mostPlayedSongs = [
+                ...previousResult.me.mostPlayedSongs,
+                ...fetchMoreResult.me.mostPlayedSongs,
+              ];
+            }
+            return previousResult;
+          },
+        });
+      } catch (error) {
+        console.error("Error fetching more", error);
+      }
+      this.loadingMore = false;
     },
   },
 };
