@@ -127,7 +127,7 @@ export default {
                 }
               }`
                   : `
-              mostPlayedArtists(from: $from, to: $to, take:$take, global: $global) {
+              mostPlayedArtists(from: $from, to: $to, skip:$skip, take:$take, global: $global) {
                 plays
                 plays
                 minutes
