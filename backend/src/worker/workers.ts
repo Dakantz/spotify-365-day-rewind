@@ -274,55 +274,67 @@ export class UserWorker {
             if (user) {
                 console.log("Exporting ", user.name);
                 let dir = fs.mkdtempSync(`export-${user.userid}`);
-                let plays = await this.db.plays.findMany({
-                    where: {
-                        userid: user.userid,
-                    },
-                    select: {
-                        time: true,
-                        songid: true,
-                        songs: {
-                            select: {
-                                name: true,
-                                explicit: true,
-                                duration_ms: true,
-                                albums: {
-                                    select: {
-                                        uri: true,
-                                        name: true,
+                let playsPath = path.join(dir, "plays.csv");
+
+                let csvWriter = new csv.Stringifier({
+                    header: true,
+                });
+                let ofStream = fs.createWriteStream(playsPath);
+                csvWriter.pipe(ofStream);
+                let page_size = 1000
+                let fetched_plays = 0
+                let exhausted = false
+                while (!exhausted) {
+                    let plays = await this.db.plays.findMany({
+                        where: {
+                            userid: user.userid,
+                        },
+                        select: {
+                            time: true,
+                            songid: true,
+                            songs: {
+                                select: {
+                                    name: true,
+                                    explicit: true,
+                                    duration_ms: true,
+                                    albums: {
+                                        select: {
+                                            uri: true,
+                                            name: true,
+                                        },
                                     },
-                                },
-                                artists: {
-                                    select: {
-                                        uri: true,
-                                        name: true,
+                                    artists: {
+                                        select: {
+                                            uri: true,
+                                            name: true,
+                                        },
                                     },
                                 },
                             },
                         },
-                    },
-                });
-                let playRows = plays.map((play) => {
-                    return {
-                        time: play.time,
-                        songid: play.songid,
-                        song: play.songs.name,
-                        explicit: play.songs.explicit,
-                        duration: play.songs.duration_ms,
-                        artistid: play.songs.artists.uri,
-                        artist: play.songs.artists.name,
-                        albumid: play.songs.albums.uri,
-                        album: play.songs.albums.name,
-                    };
-                });
-                let csvWriter = new csv.Stringifier({
-                    header: true,
-                });
-                let playsPath = path.join(dir, "plays.csv");
-                let ofStream = fs.createWriteStream(playsPath);
-                csvWriter.pipe(ofStream);
-                for (let row of playRows) {
-                    csvWriter.write(row);
+                        take: page_size,
+                        skip: fetched_plays
+                    });
+                    fetched_plays += plays.length
+                    if (plays.length < page_size) {
+                        exhausted = true
+                    }
+                    let playRows = plays.map((play) => {
+                        return {
+                            time: play.time,
+                            songid: play.songid,
+                            song: play.songs.name,
+                            explicit: play.songs.explicit,
+                            duration: play.songs.duration_ms,
+                            artistid: play.songs.artists.uri,
+                            artist: play.songs.artists.name,
+                            albumid: play.songs.albums.uri,
+                            album: play.songs.albums.name,
+                        };
+                    });
+                    for (let row of playRows) {
+                        csvWriter.write(row);
+                    }
                 }
                 ofStream.close();
                 // CSV written
